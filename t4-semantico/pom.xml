@@ -6,10 +6,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>br.ufscar.dc.compiladores</groupId>
-    <artifactId>t3-semantico</artifactId>
+    <artifactId>t4-semantico</artifactId>
     <version>1.0-SNAPSHOT</version>
 
-    <name>t3-semantico</name>
+    <name>t4-semantico</name>
     <!-- FIXME change it to the project's website -->
     <url>http://www.example.com</url>
 

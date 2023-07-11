@@ -1,4 +1,4 @@
-// Generated from /home/recoaro/Codes/UFSCAR/2023/Compiladores/construcao-compiladores-t3/t3-semantico/src/main/antlr4/br/ufscar/dc/compiladores/LA.g4 by ANTLR 4.9.2
+// Generated from /home/recoaro/Codes/UFSCAR/2023/Compiladores/construcao-compiladores-t4/t4-semantico/src/main/antlr4/br/ufscar/dc/compiladores/LA.g4 by ANTLR 4.9.2
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.*;

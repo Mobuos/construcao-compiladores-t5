@@ -1,4 +1,4 @@
-// Generated from /home/recoaro/Codes/UFSCAR/2023/Compiladores/construcao-compiladores-t3/t3-semantico/src/main/antlr4/br/ufscar/dc/compiladores/LA.g4 by ANTLR 4.9.2
+// Generated from /home/recoaro/Codes/UFSCAR/2023/Compiladores/construcao-compiladores-t4/t4-semantico/src/main/antlr4/br/ufscar/dc/compiladores/LA.g4 by ANTLR 4.9.2
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;
@@ -9,7 +9,7 @@ import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.misc.*;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
-public class T2Lexer extends Lexer {
+public class t4Lexer extends Lexer {
 	static { RuntimeMetaData.checkVersion("4.9.2", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
@@ -114,7 +114,7 @@ public class T2Lexer extends Lexer {
 	}
 
 
-	public T2Lexer(CharStream input) {
+	public t4Lexer(CharStream input) {
 		super(input);
 		_interp = new LexerATNSimulator(this,_ATN,_decisionToDFA,_sharedContextCache);
 	}
