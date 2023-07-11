@@ -12,15 +12,21 @@ public class TabelaDeSimbolos {
         PONTEIRO,
         FUNCAO,
         PROCEDIMENTO,
+        ENDERECO,
         INVALIDO
     }
     
     class EntradaTabelaDeSimbolos {
         TipoDeclaracao tipo;
-        
+        EntradaTabelaDeSimbolos dados;        
 
         private EntradaTabelaDeSimbolos(TipoDeclaracao tipo) {
             this.tipo = tipo;
+        }
+
+        private EntradaTabelaDeSimbolos(TipoDeclaracao tipo, EntradaTabelaDeSimbolos dados){
+            this.tipo = tipo;
+            this.dados = dados;
         }
     }
     
@@ -32,6 +38,10 @@ public class TabelaDeSimbolos {
     
     public void adicionar(String nome, TipoDeclaracao tipo) {
         tabela.put(nome, new EntradaTabelaDeSimbolos(tipo));
+    }
+
+    public void adicionar(String nome, TipoDeclaracao tipo, EntradaTabelaDeSimbolos dados){
+        tabela.put(nome, new EntradaTabelaDeSimbolos(tipo, dados));
     }
     
     public boolean existe(String nome) {

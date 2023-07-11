@@ -109,9 +109,15 @@ public class LASemantico extends LABaseVisitor<Void> {
                     tipoExpressao == TipoDeclaracao.INVALIDO || 
                     !LASemanticoUtils.tiposCompativeis(tipoExpressao, tipoAlvo)
                 ){
+                    String prefixo = "";
+
+                    if (ctx.PONTEIRO() != null){
+                        prefixo = ctx.PONTEIRO().getText();
+                    }
+
                     LASemanticoUtils.adicionarErroSemantico(
                         ctx.start,
-                        "atribuicao nao compativel para " + ctx.identificador().IDENT(0).getText()
+                        "atribuicao nao compativel para "+ prefixo + ctx.identificador().IDENT(0).getText()
                     );
                 }
             }

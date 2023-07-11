@@ -47,6 +47,7 @@ public class LASemanticoUtils {
         if (tipo1 == tipo2){
             return true;
         }
+        // Verifica a compatibilidade entre REAL e INTEIROS.
         else if (
                 (
                     tipo1 == TipoDeclaracao.REAL 
@@ -60,6 +61,16 @@ public class LASemanticoUtils {
             ){
             return true;
         }
+        // Verifica a compatibilidade entre PONTEIROS e ENDEREÇOS.
+        else if (
+            (tipo1 == TipoDeclaracao.PONTEIRO &&
+            tipo2 == TipoDeclaracao.ENDERECO) ||
+            (tipo1 == TipoDeclaracao.ENDERECO &&
+            tipo2 == TipoDeclaracao.PONTEIRO
+            ))
+            {
+                return true;
+            }             
 
         return false;
     }
@@ -439,11 +450,17 @@ public class LASemanticoUtils {
         Escopo escopo
     )
     {
+        TipoDeclaracao tipoIdenficador = TipoDeclaracao.INVALIDO;
+
         if (ctx.identificador() != null){
-            return LASemanticoUtils.verificarTipo(ctx.identificador(), escopo);
+            tipoIdenficador = LASemanticoUtils.verificarTipo(ctx.identificador(), escopo);
+        }
+
+        if (ctx.ENDERECO() != null){
+            tipoIdenficador = TipoDeclaracao.ENDERECO;
         }
         
-        return TipoDeclaracao.INVALIDO;
+        return tipoIdenficador;
     }
 
     // Verifica tipo de acordo com o identificador.
