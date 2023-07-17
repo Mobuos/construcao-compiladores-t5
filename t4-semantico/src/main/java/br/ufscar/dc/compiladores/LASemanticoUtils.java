@@ -16,6 +16,7 @@ import br.ufscar.dc.compiladores.LAParser.ParcelaContext;
 import br.ufscar.dc.compiladores.LAParser.Parcela_logicaContext;
 import br.ufscar.dc.compiladores.LAParser.Parcela_nao_unarioContext;
 import br.ufscar.dc.compiladores.LAParser.Parcela_unarioContext;
+import br.ufscar.dc.compiladores.LAParser.RegistroContext;
 import br.ufscar.dc.compiladores.LAParser.TermoContext;
 import br.ufscar.dc.compiladores.LAParser.Termo_logicoContext;
 import br.ufscar.dc.compiladores.LAParser.TipoContext;
@@ -73,6 +74,33 @@ public class LASemanticoUtils {
             }             
 
         return false;
+    }
+
+    // Função auxiliar para adicionar variáveis na tabela.
+    public static void adicionarIdentificadoresNoEscopo
+    (
+        Escopo escopo,
+        TipoDeclaracao tipo,
+        VariavelContext ctx
+    )
+    {
+        if (tipo == TipoDeclaracao.INVALIDO){
+            adicionarErroSemantico(ctx.tipo().start, "tipo " + ctx.tipo().getText() + " nao declarado" );
+        }
+
+        TabelaDeSimbolos tabela = escopo.escopoAtual();
+
+        ctx.identificador().forEach(ident -> {
+            if (tabela.existe(ident.getText())){
+                adicionarErroSemantico(
+                    ident.start,
+                    "identificador " + ident.getText() + " ja declarado anteriormente"
+                    );
+            }
+            else{
+                tabela.adicionar(ident.getText(), tipo);
+            }
+        });
     }
 
     // Verifica tipo básico.
@@ -141,42 +169,43 @@ public class LASemanticoUtils {
         TipoContext ctx
     )
     {
-        return verificarTipo(escopo, ctx.tipo_variavel());
+        if (ctx.tipo_variavel() != null){
+            return verificarTipo(escopo, ctx.tipo_variavel());
+        }
+        else{
+            return verificarTipo(escopo, ctx.registro());
+        }
+    }
+
+    // Verificar tipo registro
+    // caso o registro seja válido,
+    // adiciona na tabela de símbolos.
+    public static TipoDeclaracao verificarTipo
+    (
+        Escopo escopo,
+        RegistroContext ctx
+    )
+    {
+        // EntradaTabelaDeSimbolos dadosRegistro = new EntradaTabelaDeSimbolos(TipoDeclaracao.REGISTRO);
+
+        // ctx.variavel().forEach((VariavelContext variavel) -> {
+
+        // });
+        return TipoDeclaracao.REGISTRO;
     }
 
     // Verifica tipo de variável.
-    // caso a variável não foi declarada,
-    // adiciona na tabela de simbolos.
     public static TipoDeclaracao verificarTipo
     (
         Escopo escopo,
         VariavelContext ctx
     )
     {
-        TipoDeclaracao tipo = verificarTipo(escopo, ctx.tipo());
-        TabelaDeSimbolos tabela = escopo.escopoAtual();
-
-        ctx.identificador().forEach(ident -> {
-            if (tabela.existe(ident.getText())){
-                adicionarErroSemantico(
-                    ident.start,
-                    "identificador " + ident.getText() + " ja declarado anteriormente"
-                    );
-            }
-            else{
-                tabela.adicionar(ident.getText(), tipo);
-            }
-        });
-
-        if (tipo == TipoDeclaracao.INVALIDO){
-            adicionarErroSemantico(ctx.tipo().start, "tipo " + ctx.tipo().getText() + " nao declarado" );
-        }
-
-        return tipo;
+        return verificarTipo(escopo, ctx.tipo());
     }
 
     // Verifica se existe o identificador.
-    public static Boolean existeIdentificador
+    public static Boolean existeIdentificadorTodosEscopos
     (
         IdentificadorContext ctx,
         Escopo escopo

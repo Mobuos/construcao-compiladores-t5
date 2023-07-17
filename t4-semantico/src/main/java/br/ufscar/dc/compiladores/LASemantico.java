@@ -54,17 +54,10 @@ public class LASemantico extends LABaseVisitor<Void> {
         Declaracao_variaveisContext ctx
     )
     {
-        TabelaDeSimbolos tabela = escopo.escopoAtual();
-
         if (ctx.DECLARE() != null){
-            String nome = ctx.DECLARE().getText();
+            TipoDeclaracao tipo = LASemanticoUtils.verificarTipo(escopo, ctx.variavel());
 
-            if (tabela.existe(nome)){
-                System.out.println("Variavel " + nome + "ja esta declarada");
-            }
-            else{
-                LASemanticoUtils.verificarTipo(escopo, ctx.variavel());
-            }
+            LASemanticoUtils.adicionarIdentificadoresNoEscopo(escopo, tipo, ctx.variavel());
         }
         return super.visitDeclaracao_variaveis(ctx);
     }
@@ -75,7 +68,7 @@ public class LASemantico extends LABaseVisitor<Void> {
         IdentificadorContext ctx
     ) 
     {
-        Boolean existeIdentificador = LASemanticoUtils.existeIdentificador(ctx, escopo);
+        Boolean existeIdentificador = LASemanticoUtils.existeIdentificadorTodosEscopos(ctx, escopo);
         String nome = ctx.IDENT().get(0).getText();
 
         if (!existeIdentificador){
@@ -91,7 +84,7 @@ public class LASemantico extends LABaseVisitor<Void> {
         CmdAtribuicaoContext ctx
     ) 
     {
-        if (LASemanticoUtils.existeIdentificador(ctx.identificador(), escopo)){
+        if (LASemanticoUtils.existeIdentificadorTodosEscopos(ctx.identificador(), escopo)){
             String nome = ctx.identificador().IDENT(0).getText();
             TipoDeclaracao tipoAlvo = LASemanticoUtils.getTipoDeTodosEscopos(escopo, nome);
 

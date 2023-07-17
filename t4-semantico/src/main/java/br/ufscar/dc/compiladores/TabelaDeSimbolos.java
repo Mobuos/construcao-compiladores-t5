@@ -16,17 +16,18 @@ public class TabelaDeSimbolos {
         INVALIDO
     }
     
-    class EntradaTabelaDeSimbolos {
+    private class EntradaTabelaDeSimbolos {
         TipoDeclaracao tipo;
-        EntradaTabelaDeSimbolos dados;        
+        // TabelaDeSimbolos dados = null;        
 
         private EntradaTabelaDeSimbolos(TipoDeclaracao tipo) {
             this.tipo = tipo;
+            // this.dados = null;
         }
 
-        private EntradaTabelaDeSimbolos(TipoDeclaracao tipo, EntradaTabelaDeSimbolos dados){
+        private EntradaTabelaDeSimbolos(TipoDeclaracao tipo, TabelaDeSimbolos dados){
             this.tipo = tipo;
-            this.dados = dados;
+            // this.dados = dados;
         }
     }
     
@@ -40,7 +41,7 @@ public class TabelaDeSimbolos {
         tabela.put(nome, new EntradaTabelaDeSimbolos(tipo));
     }
 
-    public void adicionar(String nome, TipoDeclaracao tipo, EntradaTabelaDeSimbolos dados){
+    public void adicionar(String nome, TipoDeclaracao tipo, TabelaDeSimbolos dados){
         tabela.put(nome, new EntradaTabelaDeSimbolos(tipo, dados));
     }
     
