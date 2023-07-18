@@ -240,6 +240,8 @@ public class LASemanticoUtils {
             nome += "." + ctx.IDENT(i+1);
         }
 
+        adicionarErroSemantico(null, nome);
+
         for ( TabelaDeSimbolos tabela: tabelas){
             if (tabela.existe(nome)){
                 existeVariavel = true;
