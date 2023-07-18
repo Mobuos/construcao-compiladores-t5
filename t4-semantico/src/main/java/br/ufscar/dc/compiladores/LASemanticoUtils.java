@@ -90,14 +90,14 @@ public class LASemanticoUtils {
             adicionarErroSemantico(ctx.tipo().start, "tipo " + ctx.tipo().getText() + " nao declarado" );
         }
         ctx.identificador().forEach(ident -> {
-            if (tabela.existe(ident.getText())){
+            if (tabela.existe(ident.getText()) || tabela.existe(ident.IDENT(0).getText())){
                 adicionarErroSemantico(
                     ident.start,
-                    "identificador " + ident.getText() + " ja declarado anteriormente"
+                    "identificador " + ident.IDENT(0).getText() + " ja declarado anteriormente"
                 );
             }
             else if (tipo != TipoDeclaracao.REGISTRO){
-                tabela.adicionar(ident.getText(), tipo);
+                tabela.adicionar(ident.IDENT(0).getText(), tipo);
             }
             else{
                 adicionarRegistroNoEscopo(escopo, ctx.tipo().registro(), ident.getText());

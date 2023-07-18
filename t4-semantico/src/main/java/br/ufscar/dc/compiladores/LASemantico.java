@@ -115,10 +115,17 @@ public class LASemantico extends LABaseVisitor<Void> {
                         prefixo = ctx.PONTEIRO().getText();
                     }
 
-                    LASemanticoUtils.adicionarErroSemantico(
-                        ctx.start,
-                        "atribuicao nao compativel para "+ prefixo + ctx.identificador().IDENT(0).getText()
-                    );
+                    if (ctx.identificador().ABRECHAVE(0) != null) {
+                        LASemanticoUtils.adicionarErroSemantico(
+                            ctx.start,
+                            "atribuicao nao compativel para "+ prefixo + ctx.identificador().getText()
+                        );
+                    } else {
+                        LASemanticoUtils.adicionarErroSemantico(
+                            ctx.start,
+                            "atribuicao nao compativel para "+ prefixo + ctx.identificador().IDENT(0).getText()
+                        );
+                    }
                 }
             }
 
