@@ -76,6 +76,9 @@ public class TabelaDeSimbolos {
             HashMap<String, EntradaTabelaDeSimbolos> tabelaAtual = tabela;
 
             for (String subString: nomeSubString){
+                LASemanticoUtils.adicionarErroSemantico(subString);
+                LASemanticoUtils.adicionarErroSemantico(tabelaAtual.get(subString).tipo.toString());
+                
                 if (!tabelaAtual.containsKey(subString)){
                     break;
                 }

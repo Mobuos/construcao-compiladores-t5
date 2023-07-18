@@ -38,6 +38,14 @@ public class LASemanticoUtils {
         errosSemanticos.add(String.format("Linha %d: %s", linha, mensagem));
     }
 
+    public static void adicionarErroSemantico
+    (
+        String mensagem
+    ) 
+    {
+        errosSemanticos.add(String.format(mensagem));
+    }
+
     // Função auxiliar para comparar tipos
     public static Boolean tiposCompativeis
     (
@@ -240,9 +248,7 @@ public class LASemanticoUtils {
             nome += "." + ctx.IDENT(i+1);
         }
 
-        adicionarErroSemantico(null, nome);
-
-        for ( TabelaDeSimbolos tabela: tabelas){
+        for (TabelaDeSimbolos tabela: tabelas){
             if (tabela.existe(nome)){
                 existeVariavel = true;
                 break;
