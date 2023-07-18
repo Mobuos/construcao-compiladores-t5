@@ -18,16 +18,16 @@ public class TabelaDeSimbolos {
     
     private class EntradaTabelaDeSimbolos {
         TipoDeclaracao tipo;
-        // TabelaDeSimbolos dados = null;        
+        TabelaDeSimbolos dados = null;        
 
         private EntradaTabelaDeSimbolos(TipoDeclaracao tipo) {
             this.tipo = tipo;
-            // this.dados = null;
+            this.dados = null;
         }
 
         private EntradaTabelaDeSimbolos(TipoDeclaracao tipo, TabelaDeSimbolos dados){
             this.tipo = tipo;
-            // this.dados = dados;
+            this.dados = dados;
         }
     }
     
@@ -41,6 +41,10 @@ public class TabelaDeSimbolos {
         tabela.put(nome, new EntradaTabelaDeSimbolos(tipo));
     }
 
+    public void adicionarRegistro(String nome, TabelaDeSimbolos dadosRegistro){
+        tabela.put(nome, new EntradaTabelaDeSimbolos(TipoDeclaracao.REGISTRO, dadosRegistro));
+    }
+
     public void adicionar(String nome, TipoDeclaracao tipo, TabelaDeSimbolos dados){
         tabela.put(nome, new EntradaTabelaDeSimbolos(tipo, dados));
     }
@@ -52,4 +56,8 @@ public class TabelaDeSimbolos {
     public TipoDeclaracao verificar(String nome) {
         return tabela.get(nome).tipo;
     }   
+
+    public TabelaDeSimbolos recuperarRegistro (String nome){
+        return this.tabela.get(nome).dados;
+    }
 }

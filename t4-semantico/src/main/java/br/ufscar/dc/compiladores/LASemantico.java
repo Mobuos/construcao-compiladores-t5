@@ -55,9 +55,9 @@ public class LASemantico extends LABaseVisitor<Void> {
     )
     {
         if (ctx.DECLARE() != null){
-            TipoDeclaracao tipo = LASemanticoUtils.verificarTipo(escopo, ctx.variavel());
+            TabelaDeSimbolos tabelaAtual = escopo.escopoAtual();
 
-            LASemanticoUtils.adicionarIdentificadoresNoEscopo(escopo, tipo, ctx.variavel());
+            LASemanticoUtils.adicionarIdentificadoresNaTabela(escopo, tabelaAtual, ctx.variavel());
         }
         return super.visitDeclaracao_variaveis(ctx);
     }
@@ -69,7 +69,7 @@ public class LASemantico extends LABaseVisitor<Void> {
     ) 
     {
         Boolean existeIdentificador = LASemanticoUtils.existeIdentificadorTodosEscopos(ctx, escopo);
-        String nome = ctx.IDENT().get(0).getText();
+        String nome = ctx.IDENT(0).getText();
 
         if (!existeIdentificador){
             LASemanticoUtils.adicionarErroSemantico(ctx.start, "identificador " + nome + " nao declarado" );
