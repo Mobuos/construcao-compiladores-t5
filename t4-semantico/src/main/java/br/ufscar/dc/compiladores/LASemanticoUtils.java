@@ -26,6 +26,10 @@ import br.ufscar.dc.compiladores.LAParser.VariavelContext;
 import br.ufscar.dc.compiladores.TabelaDeSimbolos.TipoDeclaracao;
 public class LASemanticoUtils {
     public static List<String> errosSemanticos = new ArrayList<>();
+
+    // Variável auxiliar para controle se ele está declarando um registro
+    // ou não, caso esteja, pula a verificação de identificador do registro.
+    public static Boolean declarandoRegistro = false;
     
     // Função auxiliar para adicionar erros semânticos.
     public static void adicionarErroSemantico
@@ -36,14 +40,6 @@ public class LASemanticoUtils {
     {
         int linha = t.getLine();
         errosSemanticos.add(String.format("Linha %d: %s", linha, mensagem));
-    }
-
-    public static void adicionarErroSemantico
-    (
-        String mensagem
-    ) 
-    {
-        errosSemanticos.add(String.format(mensagem));
     }
 
     // Função auxiliar para comparar tipos
@@ -108,7 +104,9 @@ public class LASemanticoUtils {
                 tabela.adicionar(ident.IDENT(0).getText(), tipo);
             }
             else{
+                declarandoRegistro = true;
                 adicionarRegistroNoEscopo(escopo, ctx.tipo().registro(), ident.getText());
+                declarandoRegistro = false;
             }
         });
     }

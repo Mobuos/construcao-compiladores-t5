@@ -54,14 +54,19 @@ public class TabelaDeSimbolos {
             return tabela.containsKey(nome);
         }
         else{
-            String[] nomeSubString = nome.split(".");
+            String[] nomeSubString = nome.split("\\.");
             HashMap<String, EntradaTabelaDeSimbolos> tabelaAtual = tabela;
 
             for (String subString: nomeSubString){
                 if (!tabelaAtual.containsKey(subString)){
                     return false;
                 }
-                tabelaAtual = tabelaAtual.get(subString).dados.tabela;
+                if (tabelaAtual.get(subString).tipo == TipoDeclaracao.REGISTRO){
+                    tabelaAtual = tabelaAtual.get(subString).dados.tabela;
+                }
+                else{
+                    break;
+                }
             }
             return true;
         }
@@ -72,13 +77,10 @@ public class TabelaDeSimbolos {
             return tabela.get(nome).tipo;
         }
         else{
-            String[] nomeSubString = nome.split(".");
+            String[] nomeSubString = nome.split("\\.");
             HashMap<String, EntradaTabelaDeSimbolos> tabelaAtual = tabela;
-
+            
             for (String subString: nomeSubString){
-                LASemanticoUtils.adicionarErroSemantico(subString);
-                LASemanticoUtils.adicionarErroSemantico(tabelaAtual.get(subString).tipo.toString());
-                
                 if (!tabelaAtual.containsKey(subString)){
                     break;
                 }

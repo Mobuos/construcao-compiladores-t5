@@ -5,6 +5,7 @@ import br.ufscar.dc.compiladores.LAParser.Declaracao_funcoesContext;
 import br.ufscar.dc.compiladores.LAParser.Declaracao_variaveisContext;
 import br.ufscar.dc.compiladores.LAParser.DeclaracoesContext;
 import br.ufscar.dc.compiladores.LAParser.IdentificadorContext;
+import br.ufscar.dc.compiladores.LAParser.RegistroContext;
 import br.ufscar.dc.compiladores.TabelaDeSimbolos.TipoDeclaracao;
 
 public class LASemantico extends LABaseVisitor<Void> {
@@ -70,11 +71,10 @@ public class LASemantico extends LABaseVisitor<Void> {
     {
         Boolean existeIdentificador = LASemanticoUtils.existeIdentificadorTodosEscopos(ctx, escopo);
         String nome = ctx.IDENT(0).getText();
-
-        if (!existeIdentificador){
+        
+        if (!existeIdentificador && !(ctx.parent.parent instanceof RegistroContext)){
             LASemanticoUtils.adicionarErroSemantico(ctx.start, "identificador " + nome + " nao declarado" );
         }
-
         return super.visitIdentificador(ctx);
     }
 
@@ -115,17 +115,10 @@ public class LASemantico extends LABaseVisitor<Void> {
                         prefixo = ctx.PONTEIRO().getText();
                     }
 
-                    if (ctx.identificador().ABRECHAVE(0) != null) {
-                        LASemanticoUtils.adicionarErroSemantico(
-                            ctx.start,
-                            "atribuicao nao compativel para "+ prefixo + ctx.identificador().getText()
-                        );
-                    } else {
-                        LASemanticoUtils.adicionarErroSemantico(
-                            ctx.start,
-                            "atribuicao nao compativel para "+ prefixo + ctx.identificador().IDENT(0).getText()
-                        );
-                    }
+                    LASemanticoUtils.adicionarErroSemantico(
+                        ctx.start,
+                        "atribuicao nao compativel para "+ prefixo + ctx.identificador().getText()
+                    );
                 }
             }
 
