@@ -18,16 +18,16 @@ public class TabelaDeSimbolos {
     
     private class EntradaTabelaDeSimbolos {
         TipoDeclaracao tipo;
-        // TabelaDeSimbolos dados = null;        
+        TabelaDeSimbolos dados = null;        
 
         private EntradaTabelaDeSimbolos(TipoDeclaracao tipo) {
             this.tipo = tipo;
-            // this.dados = null;
+            this.dados = null;
         }
 
         private EntradaTabelaDeSimbolos(TipoDeclaracao tipo, TabelaDeSimbolos dados){
             this.tipo = tipo;
-            // this.dados = dados;
+            this.dados = dados;
         }
     }
     
@@ -41,15 +41,57 @@ public class TabelaDeSimbolos {
         tabela.put(nome, new EntradaTabelaDeSimbolos(tipo));
     }
 
+    public void adicionarRegistro(String nome, TabelaDeSimbolos dadosRegistro){
+        tabela.put(nome, new EntradaTabelaDeSimbolos(TipoDeclaracao.REGISTRO, dadosRegistro));
+    }
+
     public void adicionar(String nome, TipoDeclaracao tipo, TabelaDeSimbolos dados){
         tabela.put(nome, new EntradaTabelaDeSimbolos(tipo, dados));
     }
     
     public boolean existe(String nome) {
-        return tabela.containsKey(nome);
+        if (!nome.contains(".")){
+            return tabela.containsKey(nome);
+        }
+        else{
+            String[] nomeSubString = nome.split(".");
+            HashMap<String, EntradaTabelaDeSimbolos> tabelaAtual = tabela;
+
+            for (String subString: nomeSubString){
+                if (!tabelaAtual.containsKey(subString)){
+                    return false;
+                }
+                tabelaAtual = tabelaAtual.get(subString).dados.tabela;
+            }
+            return true;
+        }
     }
     
     public TipoDeclaracao verificar(String nome) {
-        return tabela.get(nome).tipo;
+        if (!nome.contains(".")){
+            return tabela.get(nome).tipo;
+        }
+        else{
+            String[] nomeSubString = nome.split(".");
+            HashMap<String, EntradaTabelaDeSimbolos> tabelaAtual = tabela;
+
+            for (String subString: nomeSubString){
+                if (!tabelaAtual.containsKey(subString)){
+                    break;
+                }
+                if (tabelaAtual.get(subString).tipo == TipoDeclaracao.REGISTRO){
+                    tabelaAtual = tabelaAtual.get(subString).dados.tabela;
+                }
+                else{
+                    return tabelaAtual.get(subString).tipo;
+                }
+            }
+
+            return TipoDeclaracao.INVALIDO;
+        }
     }   
+
+    public TabelaDeSimbolos recuperarRegistro (String nome){
+        return tabela.get(nome).dados;
+    }
 }

@@ -77,30 +77,68 @@ public class LASemanticoUtils {
     }
 
     // Função auxiliar para adicionar variáveis na tabela.
-    public static void adicionarIdentificadoresNoEscopo
+    public static void adicionarIdentificadoresNaTabela
     (
         Escopo escopo,
-        TipoDeclaracao tipo,
+        TabelaDeSimbolos tabela,
         VariavelContext ctx
     )
     {
+        TipoDeclaracao tipo = LASemanticoUtils.verificarTipo(escopo, ctx);
+
         if (tipo == TipoDeclaracao.INVALIDO){
             adicionarErroSemantico(ctx.tipo().start, "tipo " + ctx.tipo().getText() + " nao declarado" );
         }
-
-        TabelaDeSimbolos tabela = escopo.escopoAtual();
-
         ctx.identificador().forEach(ident -> {
             if (tabela.existe(ident.getText())){
                 adicionarErroSemantico(
                     ident.start,
                     "identificador " + ident.getText() + " ja declarado anteriormente"
-                    );
+                );
             }
-            else{
+            else if (tipo != TipoDeclaracao.REGISTRO){
                 tabela.adicionar(ident.getText(), tipo);
             }
+            else{
+                adicionarRegistroNoEscopo(escopo, ctx.tipo().registro(), ident.getText());
+            }
         });
+    }
+
+    // Função para recuperar a estrutura de dados do registro.
+    public static TabelaDeSimbolos recuperarEstruturaRegistro
+    (
+        String nomeRegistro,
+        Escopo escopo
+    )
+    {
+        LinkedList<TabelaDeSimbolos> todosEscopos = escopo.recuperarTodosEscopos();
+
+        for (TabelaDeSimbolos tabela: todosEscopos ){
+            if (tabela.existe(nomeRegistro)){
+                return tabela.recuperarRegistro(nomeRegistro);
+            }
+        }
+
+        return null;
+    }
+    
+    // Função para adicionar um novo registro a tabela atual.
+    public static void adicionarRegistroNoEscopo
+    (
+        Escopo escopo,
+        RegistroContext ctx,
+        String nome
+    )
+    {
+        TabelaDeSimbolos tabelaAtual = escopo.escopoAtual();
+        TabelaDeSimbolos dadosRegistro = new TabelaDeSimbolos();
+
+        ctx.variavel().forEach(variavel -> {
+            adicionarIdentificadoresNaTabela(escopo, dadosRegistro, variavel);
+        });
+
+        tabelaAtual.adicionarRegistro(nome, dadosRegistro);
     }
 
     // Verifica tipo básico.
@@ -154,7 +192,7 @@ public class LASemanticoUtils {
         
         // É uma variável de tipo básico.
         else {
-            tipo = verificarTipo( ctx.tipo_basico());
+            tipo = verificarTipo(ctx.tipo_basico());
         }
 
         
@@ -173,25 +211,8 @@ public class LASemanticoUtils {
             return verificarTipo(escopo, ctx.tipo_variavel());
         }
         else{
-            return verificarTipo(escopo, ctx.registro());
+            return TipoDeclaracao.REGISTRO;
         }
-    }
-
-    // Verificar tipo registro
-    // caso o registro seja válido,
-    // adiciona na tabela de símbolos.
-    public static TipoDeclaracao verificarTipo
-    (
-        Escopo escopo,
-        RegistroContext ctx
-    )
-    {
-        // EntradaTabelaDeSimbolos dadosRegistro = new EntradaTabelaDeSimbolos(TipoDeclaracao.REGISTRO);
-
-        // ctx.variavel().forEach((VariavelContext variavel) -> {
-
-        // });
-        return TipoDeclaracao.REGISTRO;
     }
 
     // Verifica tipo de variável.
@@ -214,6 +235,10 @@ public class LASemanticoUtils {
         LinkedList<TabelaDeSimbolos> tabelas = escopo.recuperarTodosEscopos();
         String nome = ctx.IDENT().get(0).getText();
         boolean existeVariavel = false;
+
+        for (int i = 0; i < ctx.PONTO().size(); i++){
+            nome += "." + ctx.IDENT(i+1);
+        }
 
         for ( TabelaDeSimbolos tabela: tabelas){
             if (tabela.existe(nome)){
