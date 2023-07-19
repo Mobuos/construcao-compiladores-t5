@@ -13,6 +13,7 @@ public class TabelaDeSimbolos {
         FUNCAO,
         PROCEDIMENTO,
         ENDERECO,
+        TIPO,
         INVALIDO
     }
     
@@ -43,6 +44,10 @@ public class TabelaDeSimbolos {
 
     public void adicionarRegistro(String nome, TabelaDeSimbolos dadosRegistro){
         tabela.put(nome, new EntradaTabelaDeSimbolos(TipoDeclaracao.REGISTRO, dadosRegistro));
+    }
+
+    public void adicionarTipo(String nome, TabelaDeSimbolos dadosRegistro){
+        tabela.put(nome, new EntradaTabelaDeSimbolos(TipoDeclaracao.TIPO, dadosRegistro));
     }
 
     public void adicionar(String nome, TipoDeclaracao tipo, TabelaDeSimbolos dados){

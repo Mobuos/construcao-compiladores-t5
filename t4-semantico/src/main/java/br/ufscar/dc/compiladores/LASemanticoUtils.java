@@ -26,10 +26,6 @@ import br.ufscar.dc.compiladores.LAParser.VariavelContext;
 import br.ufscar.dc.compiladores.TabelaDeSimbolos.TipoDeclaracao;
 public class LASemanticoUtils {
     public static List<String> errosSemanticos = new ArrayList<>();
-
-    // Variável auxiliar para controle se ele está declarando um registro
-    // ou não, caso esteja, pula a verificação de identificador do registro.
-    public static Boolean declarandoRegistro = false;
     
     // Função auxiliar para adicionar erros semânticos.
     public static void adicionarErroSemantico
@@ -100,19 +96,25 @@ public class LASemanticoUtils {
                     "identificador " + ident.IDENT(0).getText() + " ja declarado anteriormente"
                 );
             }
-            else if (tipo != TipoDeclaracao.REGISTRO){
-                tabela.adicionar(ident.IDENT(0).getText(), tipo);
-            }
             else{
-                declarandoRegistro = true;
-                adicionarRegistroNoEscopo(escopo, ctx.tipo().registro(), ident.getText());
-                declarandoRegistro = false;
+                switch(tipo){
+                    case REGISTRO:
+                        adicionarRegistroNoEscopo(escopo, ctx.tipo().registro(), ident.getText(), false);
+                        break;
+                    case TIPO:
+                        TabelaDeSimbolos dados = recuperarEstruturaTipo(ctx.tipo().tipo_variavel().IDENT().getText(), escopo);
+                        tabela.adicionarRegistro(ident.IDENT(0).getText(), dados);
+                        break;
+                    default:
+                        tabela.adicionar(ident.IDENT(0).getText(), tipo);
+                        break;
+                }
             }
         });
     }
 
     // Função para recuperar a estrutura de dados do registro.
-    public static TabelaDeSimbolos recuperarEstruturaRegistro
+    public static TabelaDeSimbolos recuperarEstruturaTipo
     (
         String nomeRegistro,
         Escopo escopo
@@ -134,17 +136,24 @@ public class LASemanticoUtils {
     (
         Escopo escopo,
         RegistroContext ctx,
-        String nome
+        String nome,
+        Boolean isType
     )
     {
         TabelaDeSimbolos tabelaAtual = escopo.escopoAtual();
-        TabelaDeSimbolos dadosRegistro = new TabelaDeSimbolos();
+        TabelaDeSimbolos dados = new TabelaDeSimbolos();
+
 
         ctx.variavel().forEach(variavel -> {
-            adicionarIdentificadoresNaTabela(escopo, dadosRegistro, variavel);
+            adicionarIdentificadoresNaTabela(escopo, dados, variavel);
         });
 
-        tabelaAtual.adicionarRegistro(nome, dadosRegistro);
+        if (isType){
+            tabelaAtual.adicionarTipo(nome, dados);
+        }
+        else{
+            tabelaAtual.adicionarRegistro(nome, dados);
+        }
     }
 
     // Verifica tipo básico.
@@ -176,8 +185,6 @@ public class LASemanticoUtils {
         Tipo_variavelContext ctx
     )
     {
-        TipoDeclaracao tipo;
-
         // Caso haja o simbolo de ponteiro antes é declarado como ponteiro.
         if (ctx.PONTEIRO() != null){
             return TipoDeclaracao.PONTEIRO;
@@ -186,23 +193,20 @@ public class LASemanticoUtils {
         // Caso seja um identificador, é um registro,
         // então é necessário ver se o tipo de registro existe.
         else if (ctx.IDENT() != null) {
-            TabelaDeSimbolos tabela = escopo.escopoAtual();
+            List<TabelaDeSimbolos> tabelas = escopo.recuperarTodosEscopos();
 
-            if (!tabela.existe(ctx.IDENT().getText())){
-                return TipoDeclaracao.INVALIDO;
+            for (TabelaDeSimbolos tabela: tabelas){
+                if (tabela.existe(ctx.IDENT().getText())){
+                    return TipoDeclaracao.TIPO;
+                }
             }
-            else{
-                tipo = TipoDeclaracao.REGISTRO;
-            }
+            return TipoDeclaracao.INVALIDO;
         }
         
         // É uma variável de tipo básico.
         else {
-            tipo = verificarTipo(ctx.tipo_basico());
+            return verificarTipo(ctx.tipo_basico());
         }
-
-        
-        return tipo;
     }
 
     // Função auxiliar para o contexto "Tipo"
