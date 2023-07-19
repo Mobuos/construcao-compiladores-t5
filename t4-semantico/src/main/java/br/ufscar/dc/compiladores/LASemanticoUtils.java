@@ -6,12 +6,14 @@ import java.util.List;
 
 import org.antlr.v4.runtime.Token;
 
+import br.ufscar.dc.compiladores.LAParser.CmdChamadaContext;
 import br.ufscar.dc.compiladores.LAParser.Exp_aritmeticaContext;
 import br.ufscar.dc.compiladores.LAParser.Exp_relacionalContext;
 import br.ufscar.dc.compiladores.LAParser.ExpressaoContext;
 import br.ufscar.dc.compiladores.LAParser.FatorContext;
 import br.ufscar.dc.compiladores.LAParser.Fator_logicoContext;
 import br.ufscar.dc.compiladores.LAParser.IdentificadorContext;
+import br.ufscar.dc.compiladores.LAParser.ParametroContext;
 import br.ufscar.dc.compiladores.LAParser.ParcelaContext;
 import br.ufscar.dc.compiladores.LAParser.Parcela_logicaContext;
 import br.ufscar.dc.compiladores.LAParser.Parcela_nao_unarioContext;
@@ -76,8 +78,39 @@ public class LASemanticoUtils {
         return false;
     }
 
+    // Função auxiliar para adicionar identificadores na tabela de dados
+    // das funções/procedimentos. 
+    public static void adicionarParametroNaTabela
+    (
+        Escopo escopo,
+        TabelaDeSimbolos tabela,
+        ParametroContext param,
+        TipoDeclaracao tipoIdent
+    )
+    {
+        param.identificador().forEach(ident -> {
+            if (tabela.existe(ident.getText()) || tabela.existe(ident.IDENT(0).getText())){
+                adicionarErroSemantico(
+                    ident.start,
+                    "identificador " + ident.IDENT(0).getText() + " ja declarado anteriormente"
+                );
+            }
+            else{
+                switch(tipoIdent){
+                    case TIPO:
+                        TabelaDeSimbolos dados = recuperarEstruturaTipo(param.tipo_variavel().IDENT().getText(), escopo);
+                        tabela.adicionarRegistro(ident.IDENT(0).getText(), dados);
+                        break;
+                    default:
+                        tabela.adicionar(ident.IDENT(0).getText(), tipoIdent);
+                        break;
+                }
+            }
+        });
+    }
+
     // Função auxiliar para adicionar variáveis na tabela.
-    public static void adicionarIdentificadoresNaTabela
+    public static void adicionarVariaveisNaTabela
     (
         Escopo escopo,
         TabelaDeSimbolos tabela,
@@ -113,6 +146,31 @@ public class LASemanticoUtils {
         });
     }
 
+    // Função para adicionar um novo registro a tabela atual.
+    public static void adicionarRegistroNoEscopo
+    (
+        Escopo escopo,
+        RegistroContext ctx,
+        String nome,
+        Boolean isType
+    )
+    {
+        TabelaDeSimbolos tabelaAtual = escopo.escopoAtual();
+        TabelaDeSimbolos dados = new TabelaDeSimbolos();
+
+
+        ctx.variavel().forEach(variavel -> {
+            adicionarVariaveisNaTabela(escopo, dados, variavel);
+        });
+
+        if (isType){
+            tabelaAtual.adicionarTipo(nome, dados);
+        }
+        else{
+            tabelaAtual.adicionarRegistro(nome, dados);
+        }
+    }
+
     // Função para recuperar a estrutura de dados do registro.
     public static TabelaDeSimbolos recuperarEstruturaTipo
     (
@@ -131,29 +189,47 @@ public class LASemanticoUtils {
         return null;
     }
     
-    // Função para adicionar um novo registro a tabela atual.
-    public static void adicionarRegistroNoEscopo
+     // Verifica se existe o identificador.
+    public static Boolean existeIdentificadorTodosEscopos
     (
         Escopo escopo,
-        RegistroContext ctx,
-        String nome,
-        Boolean isType
+        IdentificadorContext ctx
     )
     {
-        TabelaDeSimbolos tabelaAtual = escopo.escopoAtual();
-        TabelaDeSimbolos dados = new TabelaDeSimbolos();
+        LinkedList<TabelaDeSimbolos> tabelas = escopo.recuperarTodosEscopos();
+        String nome = ctx.IDENT().get(0).getText();
+        boolean existeVariavel = false;
 
-
-        ctx.variavel().forEach(variavel -> {
-            adicionarIdentificadoresNaTabela(escopo, dados, variavel);
-        });
-
-        if (isType){
-            tabelaAtual.adicionarTipo(nome, dados);
+        for (int i = 0; i < ctx.PONTO().size(); i++){
+            nome += "." + ctx.IDENT(i+1);
         }
-        else{
-            tabelaAtual.adicionarRegistro(nome, dados);
+
+        for (TabelaDeSimbolos tabela: tabelas){
+            if (tabela.existe(nome)){
+                existeVariavel = true;
+                break;
+            }
         }
+
+        return existeVariavel;
+    }
+
+    // Verifica tipo de identificador, varrendo todos os escopos.
+    public static TipoDeclaracao getTipoDeTodosEscopos
+    (
+        Escopo escopo,
+        String nome
+    )
+    {
+        LinkedList<TabelaDeSimbolos> tabelas = escopo.recuperarTodosEscopos();
+
+        for (TabelaDeSimbolos tabela : tabelas){
+            if (tabela.existe(nome)){
+                return tabela.verificar(nome);
+            }
+        }
+
+        return TipoDeclaracao.INVALIDO;
     }
 
     // Verifica tipo básico.
@@ -235,54 +311,11 @@ public class LASemanticoUtils {
         return verificarTipo(escopo, ctx.tipo());
     }
 
-    // Verifica se existe o identificador.
-    public static Boolean existeIdentificadorTodosEscopos
-    (
-        IdentificadorContext ctx,
-        Escopo escopo
-    )
-    {
-        LinkedList<TabelaDeSimbolos> tabelas = escopo.recuperarTodosEscopos();
-        String nome = ctx.IDENT().get(0).getText();
-        boolean existeVariavel = false;
-
-        for (int i = 0; i < ctx.PONTO().size(); i++){
-            nome += "." + ctx.IDENT(i+1);
-        }
-
-        for (TabelaDeSimbolos tabela: tabelas){
-            if (tabela.existe(nome)){
-                existeVariavel = true;
-                break;
-            }
-        }
-
-        return existeVariavel;
-    }
-
-    // Verifica tipo de identificador, varrendo todos os escopos.
-    public static TipoDeclaracao getTipoDeTodosEscopos
-    (
-        Escopo escopo,
-        String nome
-    )
-    {
-        LinkedList<TabelaDeSimbolos> tabelas = escopo.recuperarTodosEscopos();
-
-        for (TabelaDeSimbolos tabela : tabelas){
-            if (tabela.existe(nome)){
-                return tabela.verificar(nome);
-            }
-        }
-
-        return TipoDeclaracao.INVALIDO;
-    }
-
     // Verifica tipo de parcela unária.
     public static TipoDeclaracao verificarTipo
     (
-        Parcela_unarioContext ctx,
-        Escopo escopo
+        Escopo escopo,
+        Parcela_unarioContext ctx
     )
     {
         if (ctx.identificador() != null){
@@ -307,24 +340,40 @@ public class LASemanticoUtils {
         }
 
         if (ctx.exp_unica != null){
-            return verificarTipo(ctx.exp_unica, escopo);
+            return verificarTipo(escopo, ctx.exp_unica);
+        }
+
+        if (ctx.cmdChamada() != null){
+            return verificarTipo(escopo, ctx.cmdChamada());
         }
 
         return TipoDeclaracao.INVALIDO;
     }
 
+    // Verifica tipo de cmdChamada
+    public static TipoDeclaracao verificarTipo
+    (
+        Escopo escopo,
+        CmdChamadaContext ctx
+    )
+    {
+        String nome = ctx.IDENT().getText();
+
+        return getTipoDeTodosEscopos(escopo, nome);
+    }
+
     // Verifica tipo de termo lógico.
     public static TipoDeclaracao verificarTipo
     (
-        Termo_logicoContext ctx,
-        Escopo escopo
+        Escopo escopo,
+        Termo_logicoContext ctx
     )
     {
-        TipoDeclaracao tipoAlvo = verificarTipo(ctx.fator_logico(0), escopo);
+        TipoDeclaracao tipoAlvo = verificarTipo(escopo, ctx.fator_logico(0));
         
         if (tipoAlvo != TipoDeclaracao.INVALIDO){
             for (Fator_logicoContext fator_logico : ctx.fator_logico()) {
-                TipoDeclaracao tipoTestado = verificarTipo(fator_logico, escopo);
+                TipoDeclaracao tipoTestado = verificarTipo(escopo, fator_logico);
     
                 if (!tiposCompativeis(tipoTestado, tipoAlvo)){
                     return TipoDeclaracao.INVALIDO;
@@ -343,15 +392,15 @@ public class LASemanticoUtils {
     // Verifica tipo de expressão.
     public static TipoDeclaracao verificarTipo
     (
-        ExpressaoContext ctx,
-        Escopo escopo
+        Escopo escopo,
+        ExpressaoContext ctx
     )
     {
-        TipoDeclaracao tipoAlvo = verificarTipo(ctx.termo_logico(0), escopo);
+        TipoDeclaracao tipoAlvo = verificarTipo(escopo, ctx.termo_logico(0));
 
         if (tipoAlvo != TipoDeclaracao.INVALIDO){
             for (Termo_logicoContext termo_logico : ctx.termo_logico()) {
-                TipoDeclaracao tipoTestado = verificarTipo(termo_logico, escopo);
+                TipoDeclaracao tipoTestado = verificarTipo(escopo, termo_logico);
     
                 if (!tiposCompativeis(tipoTestado, tipoAlvo)){
                     return TipoDeclaracao.INVALIDO;
@@ -371,12 +420,12 @@ public class LASemanticoUtils {
     // Verifica tipo de fator lógico.
     public static TipoDeclaracao verificarTipo
     (
-        Fator_logicoContext ctx,
-        Escopo escopo
+        Escopo escopo,
+        Fator_logicoContext ctx
     )
     {
         if (ctx.parcela_logica() != null){
-            return LASemanticoUtils.verificarTipo(ctx.parcela_logica(), escopo);
+            return LASemanticoUtils.verificarTipo(escopo, ctx.parcela_logica());
         }
         
         return TipoDeclaracao.INVALIDO;
@@ -385,29 +434,29 @@ public class LASemanticoUtils {
     // Verifica tipo de parcela lógica.
     public static TipoDeclaracao verificarTipo
     (
-        Parcela_logicaContext ctx,
-        Escopo escopo
+        Escopo escopo,
+        Parcela_logicaContext ctx
     )
     {
         if (ctx.TRUE() != null || ctx.FALSE() != null){
             return TipoDeclaracao.LOGICO;
         }
         
-        return LASemanticoUtils.verificarTipo(ctx.exp_relacional(), escopo);   
+        return LASemanticoUtils.verificarTipo(escopo, ctx.exp_relacional());   
     }
 
     // Verifica tipo de expressão relacional.
     public static TipoDeclaracao verificarTipo
     (
-        Exp_relacionalContext ctx,
-        Escopo escopo
+        Escopo escopo,
+        Exp_relacionalContext ctx
     )
     {
-        TipoDeclaracao tipoAlvo = verificarTipo(ctx.exp_aritmetica(0), escopo);
+        TipoDeclaracao tipoAlvo = verificarTipo(escopo, ctx.exp_aritmetica(0));
 
         if (tipoAlvo != TipoDeclaracao.INVALIDO){
             for (Exp_aritmeticaContext exp_aritmetica : ctx.exp_aritmetica()) {
-                TipoDeclaracao tipoTestado = verificarTipo(exp_aritmetica, escopo);
+                TipoDeclaracao tipoTestado = verificarTipo(escopo, exp_aritmetica);
     
                 if (!tiposCompativeis(tipoTestado, tipoAlvo)){
                     return TipoDeclaracao.INVALIDO;
@@ -427,15 +476,15 @@ public class LASemanticoUtils {
     // Verifica tipo de expressão aritmética.
     public static TipoDeclaracao verificarTipo
     (
-        Exp_aritmeticaContext ctx,
-        Escopo escopo
+        Escopo escopo,
+        Exp_aritmeticaContext ctx
     )
     {
-        TipoDeclaracao tipoAlvo = verificarTipo(ctx.termo(0), escopo);
+        TipoDeclaracao tipoAlvo = verificarTipo(escopo, ctx.termo(0));
 
         if (tipoAlvo != TipoDeclaracao.INVALIDO){
             for (TermoContext termo : ctx.termo()) {
-                TipoDeclaracao tipoTestado = verificarTipo(termo, escopo);
+                TipoDeclaracao tipoTestado = verificarTipo(escopo, termo);
     
                 if (!tiposCompativeis(tipoTestado, tipoAlvo)){
                     return TipoDeclaracao.INVALIDO;
@@ -449,15 +498,15 @@ public class LASemanticoUtils {
     // Verifica tipo do termo, operações de + e -.
     public static TipoDeclaracao verificarTipo
     (
-        TermoContext ctx,
-        Escopo escopo
+        Escopo escopo,
+        TermoContext ctx
     )
     {
-        TipoDeclaracao tipoAlvo = verificarTipo(ctx.fator(0), escopo);
+        TipoDeclaracao tipoAlvo = verificarTipo(escopo, ctx.fator(0));
         
         if (tipoAlvo != TipoDeclaracao.INVALIDO){
             for (FatorContext fator : ctx.fator()) {
-                TipoDeclaracao tipoTestado = verificarTipo(fator, escopo);
+                TipoDeclaracao tipoTestado = verificarTipo(escopo, fator);
     
                 if (!tiposCompativeis(tipoTestado, tipoAlvo)){
                     return TipoDeclaracao.INVALIDO;
@@ -471,15 +520,15 @@ public class LASemanticoUtils {
     // Verifica tipo do fator, operações de * e /.
     public static TipoDeclaracao verificarTipo
     (
-        FatorContext ctx,
-        Escopo escopo
+        Escopo escopo,
+        FatorContext ctx
     )
     {
-        TipoDeclaracao tipoAlvo = verificarTipo(ctx.parcela(0), escopo);
+        TipoDeclaracao tipoAlvo = verificarTipo(escopo, ctx.parcela(0));
 
         if (tipoAlvo == TipoDeclaracao.INVALIDO){
             for (ParcelaContext parcela : ctx.parcela()) {
-                TipoDeclaracao tipoTestado = verificarTipo(parcela, escopo);
+                TipoDeclaracao tipoTestado = verificarTipo(escopo, parcela);
     
                 if (!tiposCompativeis(tipoTestado, tipoAlvo)){
                     return TipoDeclaracao.INVALIDO;
@@ -493,15 +542,15 @@ public class LASemanticoUtils {
     // Verifica tipo de parcela, operações de %.
     public static TipoDeclaracao verificarTipo
     (
-        ParcelaContext ctx,
-        Escopo escopo
+        Escopo escopo,
+        ParcelaContext ctx
     )
     {
         if (ctx.parcela_unario() != null){
-            return verificarTipo(ctx.parcela_unario(), escopo);
+            return verificarTipo(escopo, ctx.parcela_unario());
         }
         else if (ctx.parcela_nao_unario() != null) {
-            return verificarTipo(ctx.parcela_nao_unario(), escopo);
+            return verificarTipo(escopo, ctx.parcela_nao_unario());
         }
         
         return TipoDeclaracao.INVALIDO;
@@ -510,14 +559,14 @@ public class LASemanticoUtils {
     // Verifica tipo de parcela não unária.
     public static TipoDeclaracao verificarTipo
     (
-        Parcela_nao_unarioContext ctx,
-        Escopo escopo
+        Escopo escopo,
+        Parcela_nao_unarioContext ctx
     )
     {
         TipoDeclaracao tipoIdenficador = TipoDeclaracao.INVALIDO;
 
         if (ctx.identificador() != null){
-            tipoIdenficador = LASemanticoUtils.verificarTipo(ctx.identificador(), escopo);
+            tipoIdenficador = LASemanticoUtils.verificarTipo(escopo, ctx.identificador());
         }
 
         if (ctx.ENDERECO() != null){
@@ -530,8 +579,8 @@ public class LASemanticoUtils {
     // Verifica tipo de acordo com o identificador.
     public static TipoDeclaracao verificarTipo
     (
-        IdentificadorContext ctx,
-        Escopo escopo
+        Escopo escopo,
+        IdentificadorContext ctx
     )
     {
         if (ctx.IDENT(0) != null){   

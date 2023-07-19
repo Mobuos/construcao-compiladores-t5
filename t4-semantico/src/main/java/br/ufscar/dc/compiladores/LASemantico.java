@@ -1,10 +1,12 @@
 package br.ufscar.dc.compiladores;
 
 import br.ufscar.dc.compiladores.LAParser.CmdAtribuicaoContext;
+import br.ufscar.dc.compiladores.LAParser.CmdChamadaContext;
 import br.ufscar.dc.compiladores.LAParser.Declaracao_funcoesContext;
 import br.ufscar.dc.compiladores.LAParser.Declaracao_variaveisContext;
 import br.ufscar.dc.compiladores.LAParser.DeclaracoesContext;
 import br.ufscar.dc.compiladores.LAParser.IdentificadorContext;
+import br.ufscar.dc.compiladores.LAParser.ParametroContext;
 import br.ufscar.dc.compiladores.LAParser.RegistroContext;
 import br.ufscar.dc.compiladores.TabelaDeSimbolos.TipoDeclaracao;
 
@@ -28,25 +30,46 @@ public class LASemantico extends LABaseVisitor<Void> {
         Declaracao_funcoesContext ctx
     )
     {
-        TabelaDeSimbolos tabelaAtual = escopo.escopoAtual();
-
-        if (ctx.PROCEDIMENTO() != null){
-            String nome = ctx.PROCEDIMENTO().getText();
-
-            // TODO: Colocar erro semântico caso o nome do procedimento já exista.
-            if (tabelaAtual.existe(nome)){
-                
-            }
-        }
-        else if (ctx.FUNCAO() != null){
-            String nome = ctx.FUNCAO().getText();
-            
-            // TODO: Colocar erro semântico caso o nome do procedimento já exista.
-            if (tabelaAtual.existe(nome)){
-            }
+        TabelaDeSimbolos tabelaForaFuncao = escopo.escopoAtual();
+        String nome = ctx.IDENT().getText();
+        TabelaDeSimbolos dadosParametros = new TabelaDeSimbolos();
+        TipoDeclaracao tipoDeclarado = TipoDeclaracao.PROCEDIMENTO;
+        
+        // Adiciona uma nova tabela no escopo para a função/procedimento criado.
+        escopo.criarNovoEscopo();
+        TabelaDeSimbolos tabelaDentroFuncao = escopo.escopoAtual();
+        
+        if (tabelaForaFuncao.existe(nome)){
+            LASemanticoUtils.adicionarErroSemantico(ctx.start, "ja declarado");
         }
 
-        return super.visitDeclaracao_funcoes(ctx);
+        // Caso exista parâmetros, adiciona os parâmetros a tabela de parâmetros.
+        if (ctx.parametros() != null){
+            for (ParametroContext parametro: ctx.parametros().parametro()){
+                TipoDeclaracao tipoParametro = LASemanticoUtils.verificarTipo(escopo, parametro.tipo_variavel());
+
+                // Adiciona os parâmetros na tabela de dados da função/procedimento.
+                LASemanticoUtils.adicionarParametroNaTabela(escopo, dadosParametros, parametro, tipoParametro);
+
+                // Adiciona os parâmetros na tabela de variáveis da função/procedimento.
+                LASemanticoUtils.adicionarParametroNaTabela(escopo, tabelaDentroFuncao, parametro, tipoParametro);
+            }
+        }
+        
+        if (ctx.FUNCAO() != null){
+            tipoDeclarado = LASemanticoUtils.verificarTipo(escopo, ctx.tipo_variavel());
+        }
+
+        // Adiciona a função/procedimento na tabela geral.
+        tabelaForaFuncao.adicionar(nome, tipoDeclarado, dadosParametros);
+
+        // Visita todos os nós filhos do contexto;
+        super.visitDeclaracao_funcoes(ctx);
+
+        // Remove a tabela do escopo da função.
+        escopo.removerEscopo();
+
+        return null;
     }
 
     @Override
@@ -58,7 +81,7 @@ public class LASemantico extends LABaseVisitor<Void> {
         if (ctx.DECLARE() != null){
             TabelaDeSimbolos tabelaAtual = escopo.escopoAtual();
 
-            LASemanticoUtils.adicionarIdentificadoresNaTabela(escopo, tabelaAtual, ctx.variavel());
+            LASemanticoUtils.adicionarVariaveisNaTabela(escopo, tabelaAtual, ctx.variavel());
         }
         if (ctx.TIPO() != null){
             LASemanticoUtils.adicionarRegistroNoEscopo(escopo, ctx.registro(), ctx.IDENT().getText(), true);
@@ -72,7 +95,7 @@ public class LASemantico extends LABaseVisitor<Void> {
         IdentificadorContext ctx
     ) 
     {
-        Boolean existeIdentificador = LASemanticoUtils.existeIdentificadorTodosEscopos(ctx, escopo);
+        Boolean existeIdentificador = LASemanticoUtils.existeIdentificadorTodosEscopos(escopo, ctx);
         String nome = ctx.IDENT(0).getText();
 
         if (ctx.PONTO() != null){
@@ -81,7 +104,11 @@ public class LASemantico extends LABaseVisitor<Void> {
                 }
             }
         
-        if (!existeIdentificador && !(ctx.parent.parent instanceof RegistroContext)){
+        if (
+            !existeIdentificador && 
+            !(ctx.parent.parent instanceof RegistroContext) &&
+            !(ctx.parent.parent.parent instanceof Declaracao_funcoesContext)
+        ){
             LASemanticoUtils.adicionarErroSemantico(ctx.start, "identificador " + nome + " nao declarado" );
         }
         return super.visitIdentificador(ctx);
@@ -93,7 +120,7 @@ public class LASemantico extends LABaseVisitor<Void> {
         CmdAtribuicaoContext ctx
     ) 
     {
-        if (LASemanticoUtils.existeIdentificadorTodosEscopos(ctx.identificador(), escopo)){
+        if (LASemanticoUtils.existeIdentificadorTodosEscopos(escopo, ctx.identificador())){
             String nome = ctx.identificador().IDENT(0).getText();
 
             if (ctx.identificador().PONTO() != null){
@@ -112,7 +139,7 @@ public class LASemantico extends LABaseVisitor<Void> {
                 LASemanticoUtils.adicionarErroSemantico(ctx.start, "identificador " + nome + " com tipo invalido");
             }
             else {
-                TipoDeclaracao tipoExpressao = LASemanticoUtils.verificarTipo(ctx.expressao(), escopo);
+                TipoDeclaracao tipoExpressao = LASemanticoUtils.verificarTipo(escopo, ctx.expressao());
 
                 if (
                     tipoExpressao == TipoDeclaracao.INVALIDO || 
@@ -134,5 +161,29 @@ public class LASemantico extends LABaseVisitor<Void> {
         }
 
         return super.visitCmdAtribuicao(ctx);
+    }
+
+    @Override
+    public Void visitCmdChamada
+    (
+        CmdChamadaContext ctx
+    ) 
+    {
+        String nomeChamado = ctx.IDENT().getText();
+        TabelaDeSimbolos dadosParametros = LASemanticoUtils.recuperarEstruturaTipo(nomeChamado, escopo);
+
+        if (dadosParametros.tamanhoTabela() != ctx.expressao().size()){
+            LASemanticoUtils.adicionarErroSemantico(ctx.start, "incompatibilidade de parametros na chamada de " + nomeChamado);
+        }
+
+        else{
+            for (int i = 0; i < ctx.expressao().size(); i++){
+                if (dadosParametros.recuperarTipoParametro(i) != LASemanticoUtils.verificarTipo(escopo, ctx.expressao(i))){
+                    LASemanticoUtils.adicionarErroSemantico(ctx.start, "incompatibilidade de parametros na chamada de " + nomeChamado);
+                }
+            }
+        }
+
+        return super.visitCmdChamada(ctx);
     }
 }
