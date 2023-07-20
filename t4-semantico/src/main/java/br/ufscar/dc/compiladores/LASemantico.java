@@ -159,6 +159,7 @@ public class LASemantico extends LABaseVisitor<Void> {
 
             TipoDeclaracao tipoAlvo = LASemanticoUtils.getTipoDeTodosEscopos(escopo, nome);
 
+            
             if (ctx.PONTEIRO() != null){
                 tipoAlvo = TipoDeclaracao.PONTEIRO;
             }
@@ -168,7 +169,7 @@ public class LASemantico extends LABaseVisitor<Void> {
             }
             else {
                 TipoDeclaracao tipoExpressao = LASemanticoUtils.verificarTipo(escopo, ctx.expressao());
-
+                
                 if (
                     tipoExpressao == TipoDeclaracao.INVALIDO || 
                     !LASemanticoUtils.tiposCompativeis(tipoExpressao, tipoAlvo)

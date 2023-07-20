@@ -320,6 +320,13 @@ public class LASemanticoUtils {
     {
         if (ctx.identificador() != null){
             String nome = ctx.identificador().IDENT(0).getText();
+
+            if (ctx.identificador().PONTO() != null){
+                for (int i = 0; i < ctx.identificador().PONTO().size(); i++){
+                    nome += "." + ctx.identificador().IDENT(i+1);
+                }
+            }
+            
             return getTipoDeTodosEscopos(escopo, nome);
         }
 
@@ -333,10 +340,6 @@ public class LASemanticoUtils {
 
         if (ctx.NUM_REAL() != null){
             return TipoDeclaracao.REAL;
-        }
-
-        if (ctx.CADEIA() != null){
-            return TipoDeclaracao.LITERAL;
         }
 
         if (ctx.exp_unica != null){
@@ -569,6 +572,10 @@ public class LASemanticoUtils {
             tipoIdenficador = LASemanticoUtils.verificarTipo(escopo, ctx.identificador());
         }
 
+        if (ctx.CADEIA() != null){
+            tipoIdenficador = TipoDeclaracao.LITERAL;
+        }
+
         if (ctx.ENDERECO() != null){
             tipoIdenficador = TipoDeclaracao.ENDERECO;
         }
@@ -583,8 +590,16 @@ public class LASemanticoUtils {
         IdentificadorContext ctx
     )
     {
-        if (ctx.IDENT(0) != null){   
-            return getTipoDeTodosEscopos(escopo, ctx.IDENT(0).getText());
+        
+        if (ctx.IDENT() != null){   
+            String nome = ctx.IDENT(0).getText();
+    
+            if (ctx.PONTO() != null){
+                for (int i = 0; i < ctx.PONTO().size(); i++){
+                    nome += "." + ctx.IDENT(i+1);
+                }
+            }
+            return getTipoDeTodosEscopos(escopo, nome);
         }
         return TipoDeclaracao.INVALIDO;
     }

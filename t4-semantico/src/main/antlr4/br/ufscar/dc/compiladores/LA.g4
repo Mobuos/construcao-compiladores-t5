@@ -236,7 +236,6 @@ parcela_unario
 	| cmdChamada
 	| NUM_INT
 	| NUM_REAL
-    | CADEIA
 	| '(' exp_unica=expressao ')'
     ;
 
