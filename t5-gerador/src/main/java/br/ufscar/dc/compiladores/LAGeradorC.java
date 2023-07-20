@@ -1,7 +1,8 @@
 package br.ufscar.dc.compiladores;
 
-import java.util.stream.Collectors;
-import br.ufscar.dc.compiladores.LAGeradorUtils;
+import java.util.Iterator;
+import br.ufscar.dc.compiladores.LAParser.IdentificadorContext;
+
 import org.antlr.v4.runtime.tree.TerminalNode;
 import br.ufscar.dc.compiladores.TabelaDeSimbolos.TipoDeclaracao;
 
@@ -35,17 +36,42 @@ public class LAGeradorC extends LABaseVisitor<Void>{
 
     @Override
     public Void visitDeclaracao_variaveis(LAParser.Declaracao_variaveisContext ctx){
-        TabelaDeSimbolos.TipoDeclaracao tipoVar = TabelaDeSimbolos.TipoDeclaracao.INVALIDO;
+        TipoDeclaracao tipoVar = TabelaDeSimbolos.TipoDeclaracao.INVALIDO;
         if(ctx.DECLARE() != null){
             String strTipoLA = ctx.variavel().tipo().getText();
-            TipoDeclaracao tipo = LAGeradorUtils.mapTipoDeclaracao(strTipoLA);
-            String strTipoC = LAGeradorUtils.mapTipoC(tipo);
+            tipoVar = LAGeradorUtils.mapTipoDeclaracao(strTipoLA);
+            String strTipoC = LAGeradorUtils.mapTipoC(tipoVar);
+
+            // Adicionando tipo da variável
             saida.append(strTipoC + " ");
-            // ctx.variavel().identificador().stream()
-            //     .map(e->e.IDENT().stream().map(TerminalNode::getText).collect(Collectors.joining(".")))
-            //     .collect(Collectors.joining(", "));
-            saida.append("\n");
-            tabela.adicionar("nome do negocio", tipo, tabela);
+
+            // Loop pelos identificadores, formando uma variavel
+            Iterator<IdentificadorContext> identificador = ctx.variavel().identificador().iterator();
+            while(identificador.hasNext()){
+                IdentificadorContext i = identificador.next();
+
+                // Loop pelos IDENTs, formando um identificador
+                Iterator<TerminalNode> ident = i.IDENT().iterator();
+                String strIdentificador = "";
+                while(ident.hasNext()){
+                    String strIdent = ident.next().getText();
+                    saida.append(strIdent);
+                    if (tipoVar == TipoDeclaracao.LITERAL){
+                        saida.append("[80]");
+                    }
+                    if (ident.hasNext()) {
+                        // Se existir mais de um IDENT, acessar campos do struct
+                        // com o ponto
+                        saida.append(".");
+                    }
+                }
+                if (identificador.hasNext()){
+                    // Se existir mais de um identificador, separar com vírgula
+                    saida.append(", ");
+                }
+                tabela.adicionar(strIdentificador, tipoVar);
+            }
+            saida.append(";\n");
         }
         return null;
     }

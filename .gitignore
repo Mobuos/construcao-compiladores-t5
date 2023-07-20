@@ -15,3 +15,4 @@ t2-parser/target/
 t5-gerador/src/main/java/br/ufscar/dc/compiladores/LAGeradorUtils.java
 t5-gerador/src/main/antlr4/br/ufscar/dc/compiladores/.antlr/LALexer.java
 t5-gerador/src/main/antlr4/br/ufscar/dc/compiladores/.antlr/
+teste.alg
