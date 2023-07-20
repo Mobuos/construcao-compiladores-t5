@@ -7,7 +7,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import br.ufscar.dc.compiladores.TabelaDeSimbolos.TipoDeclaracao;
 
 public class LAGeradorC extends LABaseVisitor<Void>{
-    StringBuilder saida; //output saída
+    StringBuilder saida;
     TabelaDeSimbolos tabela;
 
     public LAGeradorC() {
@@ -17,14 +17,19 @@ public class LAGeradorC extends LABaseVisitor<Void>{
 
     @Override
     public Void visitPrograma(LAParser.ProgramaContext ctx) {
+        // Declaração inicial de bibliotecas
         saida.append("#include <stdio.h>\n");
         saida.append("#include <stdlib.h>\n");
         saida.append("\n");
+
+        // Área de declaração de variáveis globais e funções
         ctx.declaracoes().declaracao_variaveis()
             .forEach(dec -> visitDeclaracao_variaveis(dec));
         ctx.declaracoes().declaracao_funcoes()
             .forEach(dec -> visitDeclaracao_funcoes(dec));
         saida.append("\n");
+
+        // Início da função principal
         saida.append("int main() {\n");
         ctx.corpo().declaracao_variaveis()
             .forEach(dec -> visitDeclaracao_variaveis(dec));
@@ -56,6 +61,9 @@ public class LAGeradorC extends LABaseVisitor<Void>{
                 while(ident.hasNext()){
                     String strIdent = ident.next().getText();
                     saida.append(strIdent);
+                    // No caso de string, adicionar um tamanho para o vetor de
+                    // caracteres com máximo definido em 80 (de acordo com os
+                    // testes disponibilizados)
                     if (tipoVar == TipoDeclaracao.LITERAL){
                         saida.append("[80]");
                     }
