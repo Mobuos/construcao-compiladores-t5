@@ -188,50 +188,6 @@ corpo
     : declaracao_variaveis* cmd*
     ;
 
-// Regras de definições de comandos da linguagem.
-cmd
-    : cmdLeia 
-    | cmdEscreva 
-    | cmdSe 
-    | cmdCaso 
-    | cmdPara 
-    | cmdEnquanto 
-    | cmdFaca 
-    | cmdAtribuicao 
-    | cmdChamada 
-    | cmdRetorne
-    ;
-cmdLeia
-    : 'leia' '(' '^'? identificador (',' '^'? identificador)* ')'
-    ;
-cmdEscreva
-    : 'escreva' '(' expressao (',' expressao)* ')'
-    ;
-cmdSe
-    : 'se' expressao 'entao' cmd* ('senao' cmd*)? 'fim_se'
-    ;
-cmdCaso
-    : 'caso' exp_aritmetica 'seja' selecao ('senao' cmd*)? 'fim_caso'
-    ;
-cmdPara
-    : 'para' IDENT '<-' exp_aritmetica 'ate' exp_aritmetica 'faca' cmd* 'fim_para'
-    ;
-cmdEnquanto
-    : 'enquanto' expressao 'faca' cmd* 'fim_enquanto'
-    ;
-cmdFaca
-    : 'faca' cmd* 'ate' expressao
-    ;
-cmdAtribuicao
-    : '^'? identificador '<-' expressao
-    ;
-cmdChamada
-    : IDENT '(' expressao (',' expressao)* ')'
-    ;
-cmdRetorne
-    : 'retorne' expressao
-    ;
-
 // Regras auxiliares para definição de seleção do valor para o comando "Caso".
 selecao
     : item_selecao*
@@ -277,10 +233,9 @@ parcela
     ;
 parcela_unario
     : '^'? identificador
-	| IDENT '(' pars+=expressao (',' pars+=expressao)* ')'
+	| cmdChamada
 	| NUM_INT
 	| NUM_REAL
-    | CADEIA
 	| '(' exp_unica=expressao ')'
     ;
 
@@ -314,4 +269,48 @@ op_logico_1
     ;
 op_logico_2
     : 'e'
+    ;
+
+// Regras de definições de comandos da linguagem.
+cmd
+    : cmdLeia 
+    | cmdEscreva 
+    | cmdSe 
+    | cmdCaso 
+    | cmdPara 
+    | cmdEnquanto 
+    | cmdFaca 
+    | cmdAtribuicao 
+    | cmdChamada 
+    | cmdRetorne
+    ;
+cmdLeia
+    : 'leia' '(' '^'? identificador (',' '^'? identificador)* ')'
+    ;
+cmdEscreva
+    : 'escreva' '(' expressao (',' expressao)* ')'
+    ;
+cmdSe
+    : 'se' expressao 'entao' cmd* ('senao' cmd*)? 'fim_se'
+    ;
+cmdCaso
+    : 'caso' exp_aritmetica 'seja' selecao ('senao' cmd*)? 'fim_caso'
+    ;
+cmdPara
+    : 'para' IDENT '<-' exp_aritmetica 'ate' exp_aritmetica 'faca' cmd* 'fim_para'
+    ;
+cmdEnquanto
+    : 'enquanto' expressao 'faca' cmd* 'fim_enquanto'
+    ;
+cmdFaca
+    : 'faca' cmd* 'ate' expressao
+    ;
+cmdAtribuicao
+    : '^'? identificador '<-' expressao
+    ;
+cmdChamada
+    : IDENT '(' expressao (',' expressao)* ')'
+    ;
+cmdRetorne
+    : 'retorne' expressao
     ;

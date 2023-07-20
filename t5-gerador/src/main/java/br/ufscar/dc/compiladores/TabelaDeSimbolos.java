@@ -10,7 +10,6 @@ public class TabelaDeSimbolos {
         LOGICO,
         REGISTRO,
         PONTEIRO,
-        FUNCAO,
         PROCEDIMENTO,
         ENDERECO,
         TIPO,
@@ -34,27 +33,54 @@ public class TabelaDeSimbolos {
     
     private final HashMap<String, EntradaTabelaDeSimbolos> tabela;
     
-    public TabelaDeSimbolos() {
+    public TabelaDeSimbolos
+    ()
+    {
         this.tabela = new HashMap<>();
     }
     
-    public void adicionar(String nome, TipoDeclaracao tipo) {
+    public void adicionar
+    (
+        String nome,
+        TipoDeclaracao tipo
+    )
+    {
         tabela.put(nome, new EntradaTabelaDeSimbolos(tipo));
     }
 
-    public void adicionarRegistro(String nome, TabelaDeSimbolos dadosRegistro){
+    public void adicionarRegistro
+    (
+        String nome,
+        TabelaDeSimbolos dadosRegistro
+    )
+    {
         tabela.put(nome, new EntradaTabelaDeSimbolos(TipoDeclaracao.REGISTRO, dadosRegistro));
     }
 
-    public void adicionarTipo(String nome, TabelaDeSimbolos dadosRegistro){
+    public void adicionarTipo
+    (
+        String nome, 
+        TabelaDeSimbolos dadosRegistro
+    )
+    {
         tabela.put(nome, new EntradaTabelaDeSimbolos(TipoDeclaracao.TIPO, dadosRegistro));
     }
 
-    public void adicionar(String nome, TipoDeclaracao tipo, TabelaDeSimbolos dados){
+    public void adicionar
+    (
+        String nome,
+        TipoDeclaracao tipo,
+        TabelaDeSimbolos dados
+    )
+    {
         tabela.put(nome, new EntradaTabelaDeSimbolos(tipo, dados));
     }
     
-    public boolean existe(String nome) {
+    public boolean existe
+    (
+        String nome
+    )
+    {
         if (!nome.contains(".")){
             return tabela.containsKey(nome);
         }
@@ -77,7 +103,11 @@ public class TabelaDeSimbolos {
         }
     }
     
-    public TipoDeclaracao verificar(String nome) {
+    public TipoDeclaracao verificar
+    (
+        String nome
+    )
+    {
         if (!nome.contains(".")){
             return tabela.get(nome).tipo;
         }
@@ -101,7 +131,27 @@ public class TabelaDeSimbolos {
         }
     }   
 
-    public TabelaDeSimbolos recuperarRegistro (String nome){
+    public TabelaDeSimbolos recuperarRegistro 
+    (
+        String nome
+    )
+    {
         return tabela.get(nome).dados;
+    }
+
+    public Integer tamanhoTabela
+    ()
+    {
+        return tabela.size();
+    }
+
+    public TipoDeclaracao recuperarTipoParametro
+    (
+        Integer idx
+    )
+    {
+        String keyOfIdx = tabela.keySet().toArray(new String[0])[idx];
+
+        return tabela.get(keyOfIdx).tipo;
     }
 }
