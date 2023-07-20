@@ -2,6 +2,8 @@ package br.ufscar.dc.compiladores;
 
 import br.ufscar.dc.compiladores.LAParser.CmdAtribuicaoContext;
 import br.ufscar.dc.compiladores.LAParser.CmdChamadaContext;
+import br.ufscar.dc.compiladores.LAParser.CmdContext;
+import br.ufscar.dc.compiladores.LAParser.CorpoContext;
 import br.ufscar.dc.compiladores.LAParser.Declaracao_funcoesContext;
 import br.ufscar.dc.compiladores.LAParser.Declaracao_variaveisContext;
 import br.ufscar.dc.compiladores.LAParser.DeclaracoesContext;
@@ -25,6 +27,21 @@ public class LASemantico extends LABaseVisitor<Void> {
     }
 
     @Override
+    public Void visitCorpo
+    (
+        CorpoContext ctx
+    )
+    {
+        for (CmdContext cmd: ctx.cmd()){
+            if (cmd.cmdRetorne() != null){
+                LASemanticoUtils.adicionarErroSemantico(cmd.start, "comando retorne nao permitido nesse escopo");
+            }
+        }
+
+        return super.visitCorpo(ctx);
+    }
+
+    @Override
     public Void visitDeclaracao_funcoes
     (
         Declaracao_funcoesContext ctx
@@ -35,6 +52,10 @@ public class LASemantico extends LABaseVisitor<Void> {
         TabelaDeSimbolos dadosParametros = new TabelaDeSimbolos();
         TipoDeclaracao tipoDeclarado = TipoDeclaracao.PROCEDIMENTO;
         
+        if (ctx.FUNCAO() != null){
+            tipoDeclarado = LASemanticoUtils.verificarTipo(escopo, ctx.tipo_variavel());
+        }
+        
         // Adiciona uma nova tabela no escopo para a função/procedimento criado.
         escopo.criarNovoEscopo();
         TabelaDeSimbolos tabelaDentroFuncao = escopo.escopoAtual();
@@ -42,7 +63,7 @@ public class LASemantico extends LABaseVisitor<Void> {
         if (tabelaForaFuncao.existe(nome)){
             LASemanticoUtils.adicionarErroSemantico(ctx.start, "ja declarado");
         }
-
+        
         // Caso exista parâmetros, adiciona os parâmetros a tabela de parâmetros.
         if (ctx.parametros() != null){
             for (ParametroContext parametro: ctx.parametros().parametro()){
@@ -55,16 +76,18 @@ public class LASemantico extends LABaseVisitor<Void> {
                 LASemanticoUtils.adicionarParametroNaTabela(escopo, tabelaDentroFuncao, parametro, tipoParametro);
             }
         }
-        
-        if (ctx.FUNCAO() != null){
-            tipoDeclarado = LASemanticoUtils.verificarTipo(escopo, ctx.tipo_variavel());
-        }
 
         // Adiciona a função/procedimento na tabela geral.
         tabelaForaFuncao.adicionar(nome, tipoDeclarado, dadosParametros);
 
         // Visita todos os nós filhos do contexto;
         super.visitDeclaracao_funcoes(ctx);
+
+        for (CmdContext cmd: ctx.cmd()){
+            if (cmd.cmdRetorne() != null && tipoDeclarado == TipoDeclaracao.PROCEDIMENTO){
+                LASemanticoUtils.adicionarErroSemantico(cmd.start, "comando retorne nao permitido nesse escopo");
+            }
+        }
 
         // Remove a tabela do escopo da função.
         escopo.removerEscopo();
@@ -78,13 +101,18 @@ public class LASemantico extends LABaseVisitor<Void> {
         Declaracao_variaveisContext ctx
     )
     {
-        if (ctx.DECLARE() != null){
-            TabelaDeSimbolos tabelaAtual = escopo.escopoAtual();
+        TabelaDeSimbolos tabelaAtual = escopo.escopoAtual();
 
+        if (ctx.DECLARE() != null){
             LASemanticoUtils.adicionarVariaveisNaTabela(escopo, tabelaAtual, ctx.variavel());
         }
         if (ctx.TIPO() != null){
             LASemanticoUtils.adicionarRegistroNoEscopo(escopo, ctx.registro(), ctx.IDENT().getText(), true);
+        }
+        if (ctx.CONSTANTE() != null){
+            TipoDeclaracao tipoConstante = LASemanticoUtils.verificarTipo(ctx.tipo_basico());
+
+            tabelaAtual.adicionar(ctx.IDENT().getText(), tipoConstante);
         }
         return super.visitDeclaracao_variaveis(ctx);
     }
