@@ -106,7 +106,16 @@ public class Principal
         as.visitPrograma(arvore);
         LASemanticoUtils.errosSemanticos.forEach((s) -> writer.println(s));
         
-        writer.println("Fim da compilacao");
+        // Geração de Código C
+        // -------------------
+
+        if(LASemanticoUtils.errosSemanticos.isEmpty()) {
+            LAGeradorC agc = new LAGeradorC();
+            agc.visitPrograma(arvore);
+            writer.print(agc.saida.toString());
+        }
+
+        // writer.println("Fim da compilacao");
         writer.close();
     }
 }
