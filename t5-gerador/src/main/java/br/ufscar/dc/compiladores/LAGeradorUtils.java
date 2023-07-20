@@ -7,6 +7,7 @@ public class LAGeradorUtils {
         switch (tipo) {
             case LITERAL: //TODO: Fazer isso aqui ficar certo (kk)
                 strC = "char";
+                break;
             case INTEIRO:
                 strC = "int";
                 break;
@@ -15,6 +16,7 @@ public class LAGeradorUtils {
                 break;
             case LOGICO:
                 strC = "int";
+                break;
             default:
                 // Nunca irá acontecer, pois o analisador sintático
                 // não permite
