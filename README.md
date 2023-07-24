@@ -1,4 +1,4 @@
-# Analisador Semântico para a linguagem de LA (Linguagem Algorítmica).
+# Compilador da Linguagem LA (Linguagem Algorítmica) para a linguagem C.
 
 Quinto trabalho da disciplina de Construção de Compiladores, lecionada pelo professor Daniel Lucrédio.
 
