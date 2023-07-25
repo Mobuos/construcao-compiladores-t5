@@ -2,6 +2,7 @@ package br.ufscar.dc.compiladores;
 
 import java.util.Iterator;
 import br.ufscar.dc.compiladores.LAParser.IdentificadorContext;
+import br.ufscar.dc.compiladores.LAParser.Tipo_variavelContext;
 
 import org.antlr.v4.runtime.tree.TerminalNode;
 import br.ufscar.dc.compiladores.TabelaDeSimbolos.TipoDeclaracao;
@@ -27,7 +28,6 @@ public class LAGeradorC extends LABaseVisitor<Void>{
             .forEach(dec -> visitDeclaracao_variaveis(dec));
         ctx.declaracoes().declaracao_funcoes()
             .forEach(dec -> visitDeclaracao_funcoes(dec));
-        saida.append("\n");
 
         // Início da função principal
         saida.append("int main() {\n");
@@ -35,7 +35,7 @@ public class LAGeradorC extends LABaseVisitor<Void>{
             .forEach(dec -> visitDeclaracao_variaveis(dec));
         ctx.corpo().cmd()
             .forEach(cmd -> visitCmd(cmd));
-        saida.append("}\n");
+        saida.append("\treturn 0;\n}\n");
         return null;
     }
 
@@ -48,7 +48,7 @@ public class LAGeradorC extends LABaseVisitor<Void>{
             String strTipoC = LAGeradorUtils.mapTipoC(tipoVar);
 
             // Adicionando tipo da variável
-            saida.append(strTipoC + " ");
+            saida.append("\t" + strTipoC + " ");
 
             // Loop pelos identificadores, formando uma variavel
             Iterator<IdentificadorContext> identificador = ctx.variavel().identificador().iterator();
@@ -81,6 +81,25 @@ public class LAGeradorC extends LABaseVisitor<Void>{
             }
             saida.append(";\n");
         }
+        return null;
+    }
+
+    @Override
+    public Void visitCmdLeia(LAParser.CmdLeiaContext ctx) {
+        String nomeVar = ctx.identificador(0).getText();
+        // TODO: Adicionar verificação de tipo
+        TipoDeclaracao tipoVariavel = TabelaDeSimbolos.TipoDeclaracao.INTEIRO;
+        // TipoDeclaracao tipoVariavel = LASemanticoUtils.verificarTipo(, nomeVar);
+        String aux = "";
+        switch (tipoVariavel) {
+            case INTEIRO:
+                aux = "%d";
+                break;
+            case REAL:
+                aux = "%f";
+                break;
+        }
+        saida.append("\tscanf(\"" + aux + "\", &" + nomeVar + ");\n");
         return null;
     }
 }
