@@ -1,4 +1,4 @@
-# Compilador da Linguagem LA (Linguagem Algorítmica) para a linguagem C.
+# Gerador de Código C para a Linguagem LA (Linguagem Algorítmica).
 
 Quinto trabalho da disciplina de Construção de Compiladores, lecionada pelo professor Daniel Lucrédio.
 
