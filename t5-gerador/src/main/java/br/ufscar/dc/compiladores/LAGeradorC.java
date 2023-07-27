@@ -89,25 +89,27 @@ public class LAGeradorC extends LABaseVisitor<Void>{
 
     @Override
     public Void visitCmdLeia(LAParser.CmdLeiaContext ctx) {
-        saida.append("\tscanf(\"");
-        String nomeVar = ctx.identificador(0).getText();
-        TipoDeclaracao tipoVar = tabela.verificar(nomeVar);
-
-        String aux = "";
-        switch (tipoVar) {
-            case INTEIRO:
-                aux = "%d";
-                break;
-            case REAL:
-                aux = "%f";
-                break;
-            case LITERAL:
-                aux = "%s";
-                break;
-            default:
-                break;
+        Iterator<IdentificadorContext> identificador = ctx.identificador().iterator();
+        while(identificador.hasNext()){
+            String nomeVar = identificador.next().getText();
+            TipoDeclaracao tipoVar = tabela.verificar(nomeVar);
+            String aux = "";
+            switch (tipoVar) {
+                case INTEIRO:
+                    aux = "%d";
+                    break;
+                case REAL:
+                    aux = "%f";
+                    break;
+                case LITERAL:
+                    aux = "%s";
+                    break;
+                default:
+                    break;
+            }
+            saida.append("\tscanf(\"" + aux + "\", &" + nomeVar + ");\n");
         }
-        saida.append("\tscanf(\"" + aux + "\", &" + nomeVar + ");\n");
+        
         return null;
     }
 
