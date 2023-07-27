@@ -36,6 +36,7 @@ public class LAGeradorUtils {
                 break;
             case "real":
                 tipo = TipoDeclaracao.REAL;
+                break;
             case "logico":
                 tipo = TipoDeclaracao.LOGICO;
                 break;
