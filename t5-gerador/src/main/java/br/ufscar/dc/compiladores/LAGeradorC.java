@@ -88,15 +88,17 @@ public class LAGeradorC extends LABaseVisitor<Void>{
     public Void visitCmdLeia(LAParser.CmdLeiaContext ctx) {
         String nomeVar = ctx.identificador(0).getText();
         // TODO: Adicionar verificação de tipo
-        TipoDeclaracao tipoVariavel = TabelaDeSimbolos.TipoDeclaracao.INTEIRO;
+        TipoDeclaracao tipoVar = tabela.verificar(nomeVar);
         // TipoDeclaracao tipoVariavel = LASemanticoUtils.verificarTipo(, nomeVar);
         String aux = "";
-        switch (tipoVariavel) {
+        switch (tipoVar) {
             case INTEIRO:
                 aux = "%d";
                 break;
             case REAL:
                 aux = "%f";
+                break;
+            default:
                 break;
         }
         saida.append("\tscanf(\"" + aux + "\", &" + nomeVar + ");\n");
