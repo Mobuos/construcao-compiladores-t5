@@ -61,6 +61,7 @@ public class LAGeradorC extends LABaseVisitor<Void>{
                 while(ident.hasNext()){
                     String strIdent = ident.next().getText();
                     saida.append(strIdent);
+                    strIdentificador = strIdentificador.concat(strIdent);
                     // No caso de string, adicionar um tamanho para o vetor de
                     // caracteres com máximo definido em 80 (de acordo com os
                     // testes disponibilizados)
@@ -71,12 +72,14 @@ public class LAGeradorC extends LABaseVisitor<Void>{
                         // Se existir mais de um IDENT, acessar campos do struct
                         // com o ponto
                         saida.append(".");
+                        strIdentificador = strIdentificador.concat(".");
                     }
                 }
                 if (identificador.hasNext()){
                     // Se existir mais de um identificador, separar com vírgula
                     saida.append(", ");
                 }
+                // System.out.println("Adicionando identificador \"" + strIdentificador + "\" do tipo " + tipoVar);
                 tabela.adicionar(strIdentificador, tipoVar);
             }
             saida.append(";\n");
@@ -86,10 +89,10 @@ public class LAGeradorC extends LABaseVisitor<Void>{
 
     @Override
     public Void visitCmdLeia(LAParser.CmdLeiaContext ctx) {
+        saida.append("\tscanf(\"");
         String nomeVar = ctx.identificador(0).getText();
-        // TODO: Adicionar verificação de tipo
         TipoDeclaracao tipoVar = tabela.verificar(nomeVar);
-        // TipoDeclaracao tipoVariavel = LASemanticoUtils.verificarTipo(, nomeVar);
+
         String aux = "";
         switch (tipoVar) {
             case INTEIRO:
@@ -98,10 +101,14 @@ public class LAGeradorC extends LABaseVisitor<Void>{
             case REAL:
                 aux = "%f";
                 break;
+            case LITERAL:
+                aux = "%s";
+                break;
             default:
                 break;
         }
         saida.append("\tscanf(\"" + aux + "\", &" + nomeVar + ");\n");
         return null;
     }
+
 }
