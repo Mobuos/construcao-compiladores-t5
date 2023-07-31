@@ -93,23 +93,44 @@ public class LAGeradorC extends LABaseVisitor<Void>{
         while(identificador.hasNext()){
             String nomeVar = identificador.next().getText();
             TipoDeclaracao tipoVar = tabela.verificar(nomeVar);
-            String aux = "";
-            switch (tipoVar) {
-                case INTEIRO:
-                    aux = "%d";
-                    break;
-                case REAL:
-                    aux = "%f";
-                    break;
-                case LITERAL:
-                    aux = "%s";
-                    break;
-                default:
-                    break;
-            }
-            saida.append("\tscanf(\"" + aux + "\", &" + nomeVar + ");\n");
+            String formatString = LAGeradorUtils.TipoParaFormatString(tipoVar);
+
+            saida.append("\tscanf(\"" + formatString + "\", &" + nomeVar + ");\n");
         }
         
+        return null;
+    }
+
+    @Override
+    public Void visitCmdEscreva(LAParser.CmdEscrevaContext ctx) {
+        saida.append("\tprintf(\"");
+        
+        // TODO tirar essa gambiarra
+        // + quaisquer strings
+        // + %tipo
+        String nomeVar = ctx.expressao(0)
+                            .termo_logico(0)
+                            .fator_logico(0)
+                            .parcela_logica()
+                            .exp_relacional()
+                            .exp_aritmetica(0)
+                            .termo(0).fator(0)
+                            .parcela(0)
+                            .parcela_unario()
+                            .identificador()
+                            .IDENT(0)
+                            .getText();
+        String formatString = LAGeradorUtils.TipoParaFormatString(tabela.verificar(nomeVar));
+
+        saida.append(formatString);
+
+        saida.append("\",");
+
+        // variáveis separadas por vírgula
+
+        saida.append(nomeVar);
+
+        saida.append(");\n");
         return null;
     }
 
