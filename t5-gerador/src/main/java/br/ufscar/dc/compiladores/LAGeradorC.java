@@ -282,6 +282,40 @@ public class LAGeradorC extends LABaseVisitor<Void>{
         return null;
     }
 
+    @Override
+    public Void visitCmdCaso(LAParser.CmdCasoContext ctx){
+        saida.append("\tswitch (" + ctx.exp_aritmetica().getText() + ")\n\t{\n");
+        visitSelecao(ctx.selecao());
+        if (ctx.ELSE() != null){
+            saida.append("\t\tdefault: \n");
+            for (int i=0; i< ctx.cmd().size(); i++)
+            {
+                saida.append("\t");
+                visitCmd(ctx.cmd(i));
+            }
+        }
+        saida.append("\t}\n");
+        return null;
+    }
+
+    @Override
+    public Void visitSelecao(LAParser.SelecaoContext ctx){
+        ctx.item_selecao().forEach(item -> visitItem_selecao(item));
+        return null;
+    }
+
+    @Override
+    public Void visitItem_selecao(LAParser.Item_selecaoContext ctx){
+        saida.append("\t\t" + ctx.constantes().getText() + ":\n");
+        for (int i=0; i< ctx.cmd().size(); i++)
+        {
+            saida.append("\t");
+            visitCmd(ctx.cmd(i));
+        }
+        saida.append("\t\tbreak;\n\n");
+        return null;
+    }
+
     // termo_logico (op_logico_1 termo_logico)*
     //                   'ou'
     public Void utilsExpressao(ExpressaoContext ctx, boolean append) {
