@@ -94,6 +94,10 @@ public class LAGeradorC extends LABaseVisitor<Void>{
             TipoDeclaracao tipoVar = tabela.verificar(nomeVar);
             String formatString = LAGeradorUtils.TipoParaFormatString(tipoVar);
 
+            if (formatString == "%s"){
+                formatString = "%[^\\n]";
+            }
+
             saida.append("\tscanf(\"" + formatString + "\", &" + nomeVar + ");\n");
         }
         
@@ -107,7 +111,7 @@ public class LAGeradorC extends LABaseVisitor<Void>{
         // TODO tirar essa gambiarra
         // + quaisquer strings
         // + %tipo
-        ctx.expressao().forEach(exp -> visitExpressao(exp));
+        // ctx.expressao().forEach(exp -> visitExpressao(exp));
         String nomeVar = ctx.expressao(0)
                             .termo_logico(0)
                             .fator_logico(0)
@@ -120,9 +124,9 @@ public class LAGeradorC extends LABaseVisitor<Void>{
                             .identificador()
                             .IDENT(0)
                             .getText();
-        // String formatString = LAGeradorUtils.TipoParaFormatString(tabela.verificar(nomeVar));
+        String formatString = LAGeradorUtils.TipoParaFormatString(tabela.verificar(nomeVar));
 
-        // saida.append(formatString);
+        saida.append(formatString);
 
         saida.append("\",");
 
