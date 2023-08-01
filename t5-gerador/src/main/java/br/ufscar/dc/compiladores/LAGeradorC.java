@@ -2,6 +2,7 @@ package br.ufscar.dc.compiladores;
 
 import java.util.Iterator;
 
+import br.ufscar.dc.compiladores.LAParser.CmdContext;
 import br.ufscar.dc.compiladores.LAParser.Exp_aritmeticaContext;
 import br.ufscar.dc.compiladores.LAParser.Exp_relacionalContext;
 import br.ufscar.dc.compiladores.LAParser.ExpressaoContext;
@@ -115,24 +116,31 @@ public class LAGeradorC extends LABaseVisitor<Void>{
     // 'se' expressao 'entao' cmdIf+=cmd* ('senao' cmdElse+=cmd*)? 'fim_se'
     @Override
     public Void visitCmdSe(LAParser.CmdSeContext ctx) {
+
         saida.append("\tif ("); 
         visitExpressao(ctx.expressao()); 
         saida.append(") {\n");
-        for (int i=0; i< ctx.cmdIf.size(); i++)
+
+        for (CmdContext cmdCtx: ctx.cmdIf)
         {
             saida.append("\t");
-            visitCmd(ctx.cmd(i));
+            visitCmd(cmdCtx);
         }
+
         saida.append("\t}\n");
+
         if (ctx.ELSE() != null){
             saida.append("\telse {\n");
-            for (int j=ctx.cmdIf.size(); j< ctx.cmdIf.size() + ctx.cmdElse.size(); j++)
+
+            for (CmdContext cmdCtx : ctx.cmdElse)
             {
                 saida.append("\t");
-                visitCmd(ctx.cmd(j));
+                visitCmd(cmdCtx);
             }
+
             saida.append("\t}\n");
         }
+
         return null;
     }
 
@@ -306,32 +314,36 @@ public class LAGeradorC extends LABaseVisitor<Void>{
 
     @Override
     public Void visitItem_selecao(LAParser.Item_selecaoContext ctx){
-        for (int i=0; i<ctx.constantes().numero_intervalo().size(); i++){
-            int op_inicio, op_fim = 1;
-            int intervalo_inicio = Integer.parseInt(ctx.constantes.numero_intervalo(i).inicio.getText());
-            if (ctx.constantes.numero_intervalo(i).fim != null){
-                int intervalo_fim = Integer.parseInt(ctx.constantes.numero_intervalo(i).fim.getText());
-            }
-            else{
-                int intervalo_fim = null;
-            }
-            if (ctx.constantes.numero_intervalo(i).op_inicio != null)
-                op_inicio = -1;
-            if (ctx.constantes.numero_intervalo(i).op_fim != null)
-                op_fim = -1;
-            intervalo_inicio = intervalo_inicio * op_inicio;
-            if (ctx.constantes.numero_intervalo(i).fim != null)
-                intervalo_fim = intervalo_fim * op_fim;
-            if (intervalo_fim == null){
-                saida.append("\t\tcase " + ctx.constantes.numero_intervalo(i).inicio.getText()+ ":\n");
-                for (int j=0; j< ctx.cmd().size(); j++)
-                {
-                    saida.append("\t");
-                    visitCmd(ctx.cmd(j));
-                }
-            }
-        }
-        saida.append("\t\tbreak;\n\n");
+        // for (int i=0; i<ctx.constantes().numero_intervalo().size(); i++){
+        //     int op_inicio, op_fim = 1;
+        //     int intervalo_inicio = Integer.parseInt(ctx.constantes().numero_intervalo(i).inicio.toString());
+
+        //     if (ctx.constantes().numero_intervalo(i).fim != null){
+        //         int intervalo_fim = Integer.parseInt(ctx.constantes().numero_intervalo(i).fim.toString());
+        //     }
+
+        //     if (ctx.constantes().numero_intervalo(i).op_inicio != null)
+        //         op_inicio = -1;
+
+        //     if (ctx.constantes().numero_intervalo(i).op_fim != null)
+        //         op_fim = -1;
+
+        //     intervalo_inicio = intervalo_inicio * op_inicio;
+
+        //     if (ctx.constantes().numero_intervalo(i).fim != null)
+        //         intervalo_fim = intervalo_fim * op_fim;
+
+        //     if (intervalo_fim == null){
+        //         saida.append("\t\tcase " + ctx.constantes().numero_intervalo(i).inicio.toString() + ":\n");
+                
+        //         for (int j=0; j< ctx.cmd().size(); j++)
+        //         {
+        //             saida.append("\t");
+        //             visitCmd(ctx.cmd(j));
+        //         }
+        //     }
+        // }
+        // saida.append("\t\tbreak;\n\n");
         return null;
     }
 
