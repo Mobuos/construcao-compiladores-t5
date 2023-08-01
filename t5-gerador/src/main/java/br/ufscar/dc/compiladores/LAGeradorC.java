@@ -103,6 +103,58 @@ public class LAGeradorC extends LABaseVisitor<Void>{
         return null;
     }
 
+    // '^'? identificador '<-' expressao
+    @Override
+    public Void visitCmdAtribuicao(LAParser.CmdAtribuicaoContext ctx) {
+        saida.append("\t" + ctx.identificador().getText() + "=" + ctx.expressao().getText() + ";\n");
+        return null;
+    }
+
+    // 'se' expressao 'entao' cmdIf+=cmd* ('senao' cmdElse+=cmd*)? 'fim_se'
+    @Override
+    public Void visitCmdSe(LAParser.CmdSeContext ctx) {
+        saida.append("\tif (" + ctx.expressao().getText() + ") {\n");
+        for (int i=0; i< ctx.cmdIf.size(); i++)
+        {
+            saida.append("\t");
+            visitCmd(ctx.cmd(i));
+        }
+        saida.append("\t}\n");
+        if (ctx.ELSE() != null){
+            saida.append("\telse {\n");
+            for (int j=ctx.cmdIf.size(); j< ctx.cmdIf.size() + ctx.cmdElse.size(); j++)
+            {
+                saida.append("\t");
+                visitCmd(ctx.cmd(j));
+            }
+            saida.append("\t}\n");
+        }
+        return null;
+    }
+
+    @Override
+    public Void visitOp_relacional(LAParser.Op_relacionalContext ctx) {
+        if (ctx.IGUAL() != null) {
+            saida.append(" == ");
+        }
+        else if (ctx.DIFERENTE() != null) {
+            saida.append(" != ");
+        }
+        else if (ctx.MAIORIGUAL() != null) {
+            saida.append(" >= ");
+        }
+        else if (ctx.MENORIGUAL() != null) {
+            saida.append(" <= ");
+        }
+        else if (ctx.MAIOR() != null) {
+            saida.append(" > ");
+        }
+        else if (ctx.MENOR() != null) {
+            saida.append(" < ");
+        }
+        return null;
+    }
+
     @Override
     public Void visitCmdLeia(LAParser.CmdLeiaContext ctx) {
         Iterator<IdentificadorContext> identificador = ctx.identificador().iterator();
@@ -118,6 +170,12 @@ public class LAGeradorC extends LABaseVisitor<Void>{
             saida.append("\tscanf(\"" + formatString + "\", &" + nomeVar + ");\n");
         }
         
+        return null;
+    }
+
+    //TODO
+    @Override
+    public Void visitExpressao(LAParser.ExpressaoContext ctx){
         return null;
     }
 
