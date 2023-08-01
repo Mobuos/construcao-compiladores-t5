@@ -306,11 +306,30 @@ public class LAGeradorC extends LABaseVisitor<Void>{
 
     @Override
     public Void visitItem_selecao(LAParser.Item_selecaoContext ctx){
-        saida.append("\t\t" + ctx.constantes().getText() + ":\n");
-        for (int i=0; i< ctx.cmd().size(); i++)
-        {
-            saida.append("\t");
-            visitCmd(ctx.cmd(i));
+        for (int i=0; i<ctx.constantes().numero_intervalo().size(); i++){
+            int op_inicio, op_fim = 1;
+            int intervalo_inicio = Integer.parseInt(ctx.constantes.numero_intervalo(i).inicio.getText());
+            if (ctx.constantes.numero_intervalo(i).fim != null){
+                int intervalo_fim = Integer.parseInt(ctx.constantes.numero_intervalo(i).fim.getText());
+            }
+            else{
+                int intervalo_fim = null;
+            }
+            if (ctx.constantes.numero_intervalo(i).op_inicio != null)
+                op_inicio = -1;
+            if (ctx.constantes.numero_intervalo(i).op_fim != null)
+                op_fim = -1;
+            intervalo_inicio = intervalo_inicio * op_inicio;
+            if (ctx.constantes.numero_intervalo(i).fim != null)
+                intervalo_fim = intervalo_fim * op_fim;
+            if (intervalo_fim == null){
+                saida.append("\t\tcase " + ctx.constantes.numero_intervalo(i).inicio.getText()+ ":\n");
+                for (int j=0; j< ctx.cmd().size(); j++)
+                {
+                    saida.append("\t");
+                    visitCmd(ctx.cmd(j));
+                }
+            }
         }
         saida.append("\t\tbreak;\n\n");
         return null;

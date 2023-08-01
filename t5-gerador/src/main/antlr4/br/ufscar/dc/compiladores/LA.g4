@@ -199,7 +199,7 @@ constantes
     : numero_intervalo (',' numero_intervalo)*
     ;
 numero_intervalo
-    : op_unario? NUM_INT ('..' op_unario? NUM_INT)?
+    : op_inicio+=op_unario? inicio+=NUM_INT ('..' op_fim+=op_unario? fim+=NUM_INT)?
     ;
 
 // Regra para definir se o número da regra do comando "Caso" é negativo.
