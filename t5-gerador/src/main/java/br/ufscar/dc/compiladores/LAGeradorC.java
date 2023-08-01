@@ -106,14 +106,18 @@ public class LAGeradorC extends LABaseVisitor<Void>{
     // '^'? identificador '<-' expressao
     @Override
     public Void visitCmdAtribuicao(LAParser.CmdAtribuicaoContext ctx) {
-        saida.append("\t" + ctx.identificador().getText() + "=" + ctx.expressao().getText() + ";\n");
+        saida.append("\t" + ctx.identificador().getText() + "=");
+        visitExpressao(ctx.expressao());
+        saida.append(";\n");
         return null;
     }
 
     // 'se' expressao 'entao' cmdIf+=cmd* ('senao' cmdElse+=cmd*)? 'fim_se'
     @Override
     public Void visitCmdSe(LAParser.CmdSeContext ctx) {
-        saida.append("\tif (" + ctx.expressao().getText() + ") {\n");
+        saida.append("\tif ("); 
+        visitExpressao(ctx.expressao()); 
+        saida.append(") {\n");
         for (int i=0; i< ctx.cmdIf.size(); i++)
         {
             saida.append("\t");
@@ -156,6 +160,18 @@ public class LAGeradorC extends LABaseVisitor<Void>{
     }
 
     @Override
+    public Void visitOp_logico_1(LAParser.Op_logico_1Context ctx){
+        saida.append(" || ");
+        return null;
+    }
+
+    @Override
+    public Void visitOp_logico_2(LAParser.Op_logico_2Context ctx){
+        saida.append(" && ");
+        return null;
+    }
+
+    @Override
     public Void visitCmdLeia(LAParser.CmdLeiaContext ctx) {
         Iterator<IdentificadorContext> identificador = ctx.identificador().iterator();
         while(identificador.hasNext()){
@@ -173,9 +189,63 @@ public class LAGeradorC extends LABaseVisitor<Void>{
         return null;
     }
 
-    //TODO
     @Override
     public Void visitExpressao(LAParser.ExpressaoContext ctx){
+        visitTermo_logico(ctx.termo_logico(0));
+        if (ctx.op_logico_1() != null){
+            for (int i=0; i<ctx.op_logico_1().size(); i++){
+                visitOp_logico_1(ctx.op_logico_1(i));
+                visitTermo_logico(ctx.termo_logico(i+1));
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public Void visitTermo_logico(LAParser.Termo_logicoContext ctx){
+        visitFator_logico(ctx.fator_logico(0));
+        if (ctx.op_logico_2() != null){
+            for (int i=0; i<ctx.op_logico_2().size(); i++){
+                visitOp_logico_2(ctx.op_logico_2(i));
+                visitFator_logico(ctx.fator_logico(i+1));
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public Void visitFator_logico(LAParser.Fator_logicoContext ctx){
+        if (ctx.NOT() != null){
+            saida.append("!(");
+        }
+        visitParcela_logica(ctx.parcela_logica());
+        if (ctx.NOT() != null){
+            saida.append(")");
+        }
+        return null;
+    }
+
+    @Override
+    public Void visitParcela_logica(LAParser.Parcela_logicaContext ctx){
+        if (ctx.TRUE() != null){
+            saida.append("1");
+        }
+        else if (ctx.FALSE() != null){
+            saida.append("0");
+        }
+        else{
+            visitExp_relacional(ctx.exp_relacional());
+        }
+        return null;
+    }
+    
+    @Override
+    public Void visitExp_relacional(LAParser.Exp_relacionalContext ctx){
+        saida.append(ctx.exp_aritmetica(0).getText());
+        if (ctx.op_relacional() != null) {
+            visitOp_relacional(ctx.op_relacional());
+            saida.append(ctx.exp_aritmetica(1).getText());
+        }
         return null;
     }
 
