@@ -94,7 +94,7 @@ public class LAGeradorC extends LABaseVisitor<Void>{
             TipoDeclaracao tipoVar = tabela.verificar(nomeVar);
             String formatString = LAGeradorUtils.TipoParaFormatString(tipoVar);
 
-            saida.append("\tgets(\"" + formatString + "\", &" + nomeVar + ");\n");
+            saida.append("\tscanf(\"" + formatString + "\", &" + nomeVar + ");\n");
         }
         
         return null;
