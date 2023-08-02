@@ -117,6 +117,15 @@ public class LAGeradorC extends LABaseVisitor<Void>{
     }
 
     @Override
+    public Void visitRegistro(LAParser.RegistroContext ctx){
+        saida.append("\tstruct {");
+        // TODO: criar função visitVariavel (ja está implementada dentro de visitDeclaracao_variaveis)
+        ctx.variavel().forEach(var -> visitVariavel(var));
+        saida.append("\t}\n");
+        return null;
+    }
+
+    @Override
     public Void visitCmdAtribuicao(LAParser.CmdAtribuicaoContext ctx) {
         saida.append("\t");
 
@@ -342,7 +351,7 @@ public class LAGeradorC extends LABaseVisitor<Void>{
 
     @Override
     public Void visitCmdEscreva(LAParser.CmdEscrevaContext ctx) {
-        saida.append("\n\tprintf(\"");
+        saida.append("\tprintf(\"");
 
         for (ExpressaoContext expressao: ctx.expressao()){
             TipoDeclaracao tipoExpressao = LASemanticoUtils.verificarTipo(escopo, expressao);
@@ -375,7 +384,7 @@ public class LAGeradorC extends LABaseVisitor<Void>{
             }
         }
 
-        saida.append(");\n\n");
+        saida.append(");\n");
 
         LAGeradorUtils.limparListaVariavel();
 
