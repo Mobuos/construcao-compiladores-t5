@@ -4,10 +4,16 @@ import java.util.Iterator;
 
 import br.ufscar.dc.compiladores.LAParser.CmdContext;
 import br.ufscar.dc.compiladores.LAParser.CmdEnquantoContext;
+import br.ufscar.dc.compiladores.LAParser.CmdFacaContext;
 import br.ufscar.dc.compiladores.LAParser.CmdParaContext;
+import br.ufscar.dc.compiladores.LAParser.Exp_aritmeticaContext;
 import br.ufscar.dc.compiladores.LAParser.ExpressaoContext;
+import br.ufscar.dc.compiladores.LAParser.FatorContext;
 import br.ufscar.dc.compiladores.LAParser.IdentificadorContext;
 import br.ufscar.dc.compiladores.LAParser.Numero_intervaloContext;
+import br.ufscar.dc.compiladores.LAParser.ParcelaContext;
+import br.ufscar.dc.compiladores.LAParser.Parcela_unarioContext;
+import br.ufscar.dc.compiladores.LAParser.TermoContext;
 
 import org.antlr.v4.runtime.tree.TerminalNode;
 import br.ufscar.dc.compiladores.TabelaDeSimbolos.TipoDeclaracao;
@@ -244,11 +250,75 @@ public class LAGeradorC extends LABaseVisitor<Void>{
     
     @Override
     public Void visitExp_relacional(LAParser.Exp_relacionalContext ctx){
-        saida.append(ctx.exp_aritmetica(0).getText());
-        if (ctx.op_relacional() != null) {
+        visitExp_aritmetica(ctx.exp_aritmetica(0));
+        if (ctx.op_relacional() != null){
             visitOp_relacional(ctx.op_relacional());
-            saida.append(ctx.exp_aritmetica(1).getText());
+            visitExp_aritmetica(ctx.exp_aritmetica(1));
         }
+        return null;
+    }
+
+    @Override
+    public Void visitExp_aritmetica(Exp_aritmeticaContext ctx) {
+        visitTermo(ctx.termo(0));
+
+        for (int i = 0; i < ctx.op1().size(); i++){
+            saida.append(ctx.op1(i).getText());
+            visitTermo(ctx.termo(i + 1));
+        }
+
+        return null;
+    }
+
+    @Override
+    public Void visitTermo(TermoContext ctx) {
+        visitFator(ctx.fator(0));
+
+        for (int i = 0; i < ctx.op2().size(); i++){
+            saida.append(ctx.op2(i).getText());
+            visitFator(ctx.fator(i + 1));
+        }
+
+        return null;
+    }
+
+    @Override
+    public Void visitFator(FatorContext ctx) {
+        visitParcela(ctx.parcela(0));
+
+        for (int i = 0; i < ctx.op3().size(); i++){
+            saida.append(ctx.op3(i).getText());
+            visitParcela(ctx.parcela(i + 1));
+        }
+
+        return null;
+    }
+
+    @Override
+    public Void visitParcela(ParcelaContext ctx) {
+        if (ctx.op_unario() != null){
+            saida.append(ctx.op_unario().getText());
+        }
+
+        if (ctx.parcela_unario() != null){
+            visitParcela_unario(ctx.parcela_unario());
+        }
+        else{
+            saida.append(ctx.parcela_nao_unario().getText());
+        }
+
+        return null;
+    }
+
+    @Override
+    public Void visitParcela_unario(Parcela_unarioContext ctx) {
+        if (ctx.expressao() != null){
+            visitExpressao(ctx.expressao());
+        }
+        else{
+            saida.append(ctx.getText());
+        }
+
         return null;
     }
 
@@ -386,6 +456,22 @@ public class LAGeradorC extends LABaseVisitor<Void>{
         }
 
         saida.append("\t}\n\n");
+
+        return null;
+    }
+
+    @Override
+    public Void visitCmdFaca(CmdFacaContext ctx) {
+        saida.append("\n\tdo {\n");
+
+        for (CmdContext cmdCtx: ctx.cmd()){
+            saida.append("\t");
+            visitCmd(cmdCtx);
+        }
+
+        saida.append("\t} while (");
+        visitExpressao(ctx.expressao());
+        saida.append(");\n\n");
 
         return null;
     }
