@@ -14,8 +14,6 @@ import br.ufscar.dc.compiladores.LAParser.Numero_intervaloContext;
 import br.ufscar.dc.compiladores.LAParser.ParcelaContext;
 import br.ufscar.dc.compiladores.LAParser.Parcela_unarioContext;
 import br.ufscar.dc.compiladores.LAParser.TermoContext;
-
-import org.antlr.v4.runtime.tree.TerminalNode;
 import br.ufscar.dc.compiladores.TabelaDeSimbolos.TipoDeclaracao;
 
 public class LAGeradorC extends LABaseVisitor<Void>{
@@ -67,59 +65,45 @@ public class LAGeradorC extends LABaseVisitor<Void>{
 
     @Override
     public Void visitVariavel(LAParser.VariavelContext ctx){
-        TipoDeclaracao tipoVar = TabelaDeSimbolos.TipoDeclaracao.INVALIDO;
+        TipoDeclaracao tipoVariavel = LASemanticoUtils.verificarTipo(escopo, ctx.tipo());
 
-        String strTipoLA = ctx.tipo().getText();
-        boolean ponteiro = false;
+        if (tipoVariavel != TipoDeclaracao.REGISTRO){
+            String strCtipo = LAGeradorUtils.mapTipoC(tipoVariavel);
 
-        // Verifica se é um ponteiro.
-        if (strTipoLA.contains("^")){
-            strTipoLA = strTipoLA.replace("^", "");
-            ponteiro = true;
-        }
+            if (tipoVariavel == TipoDeclaracao.PONTEIRO){
+                TipoDeclaracao tipoSemPonteiro = LAGeradorUtils.mapTipoDeclaracao(ctx.tipo().getText().replace("^", ""));
+                strCtipo = LAGeradorUtils.mapTipoC(tipoSemPonteiro);
+            }
 
-        tipoVar = LAGeradorUtils.mapTipoDeclaracao(strTipoLA);
-        String strTipoC = LAGeradorUtils.mapTipoC(tipoVar);
+            saida.append("\t" + strCtipo);
 
-        if (ponteiro){
-            strTipoC += "*";
-        }
+            if (tipoVariavel == TipoDeclaracao.PONTEIRO){
+                saida.append("*");
+            }
 
-        // Adicionando tipo da variável
-        saida.append("\t" + strTipoC + " ");
+            saida.append(" " + ctx.identificador(0).getText());
 
-        // Loop pelos identificadores, formando uma variavel
-        Iterator<IdentificadorContext> identificador = ctx.identificador().iterator();
-        while(identificador.hasNext()){
-            IdentificadorContext i = identificador.next();
+            escopo.escopoAtual().adicionar(ctx.identificador(0).getText(), tipoVariavel);
 
-            // Loop pelos IDENTs, formando um identificador
-            Iterator<TerminalNode> ident = i.IDENT().iterator();
-            String strIdentificador = "";
-            while(ident.hasNext()){
-                String strIdent = ident.next().getText();
-                saida.append(strIdent);
-                strIdentificador = strIdentificador.concat(strIdent);
-                // No caso de string, adicionar um tamanho para o vetor de
-                // caracteres com máximo definido em 80 (de acordo com os
-                // testes disponibilizados)
-                if (tipoVar == TipoDeclaracao.LITERAL){
+            if (tipoVariavel == TipoDeclaracao.LITERAL){
+                saida.append("[80]");
+            }
+            
+            for (int i = 0; i < ctx.VIRGULA().size(); i++){
+                saida.append(", " + ctx.identificador(i + 1).getText());
+                escopo.escopoAtual().adicionar(ctx.identificador(i + 1).getText(), tipoVariavel);
+
+                if (tipoVariavel == TipoDeclaracao.LITERAL){
                     saida.append("[80]");
                 }
-                if (ident.hasNext()) {
-                    // Se existir mais de um IDENT, acessar campos do struct
-                    // com o ponto
-                    saida.append(".");
-                    strIdentificador = strIdentificador.concat(".");
-                }
             }
-            if (identificador.hasNext()){
-                // Se existir mais de um identificador, separar com vírgula
-                saida.append(", ");
-            }
-            escopo.escopoAtual().adicionar(strIdentificador, tipoVar);
         }
+        else{
+            
+        }
+        
         saida.append(";\n");
+
         return null;
     }
 
@@ -225,7 +209,7 @@ public class LAGeradorC extends LABaseVisitor<Void>{
                 nomeVar = "&" + nomeVar;
             }
 
-            saida.append("\n\tscanf(\"" + formatString + "\", " + nomeVar + ");\n\n");
+            saida.append("\tscanf(\"" + formatString + "\", " + nomeVar + ");\n\n");
         }
         
         return null;

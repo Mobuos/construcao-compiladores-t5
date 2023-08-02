@@ -72,6 +72,8 @@ public class LAGeradorUtils {
             case "logico":
                 tipo = TipoDeclaracao.LOGICO;
                 break;
+            case "registro":
+                tipo = TipoDeclaracao.REGISTRO;
             default:
                 tipo = TipoDeclaracao.INVALIDO;
                 break;
