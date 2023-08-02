@@ -199,7 +199,7 @@ constantes
     : numero_intervalo (',' numero_intervalo)*
     ;
 numero_intervalo
-    : op_inicio+=op_unario? inicio+=NUM_INT ('..' op_fim+=op_unario? fim+=NUM_INT)?
+    : op_inicio=op_unario? inicio=NUM_INT ('..' op_fim=op_unario? fim=NUM_INT)?
     ;
 
 // Regra para definir se o número da regra do comando "Caso" é negativo.
@@ -297,7 +297,7 @@ cmdCaso
     : 'caso' exp_aritmetica 'seja' selecao ('senao' cmd*)? 'fim_caso'
     ;
 cmdPara
-    : 'para' IDENT '<-' exp_aritmetica 'ate' exp_aritmetica 'faca' cmd* 'fim_para'
+    : 'para' IDENT '<-' inicioExp=exp_aritmetica 'ate' fimExp=exp_aritmetica 'faca' cmd* 'fim_para'
     ;
 cmdEnquanto
     : 'enquanto' expressao 'faca' cmd* 'fim_enquanto'

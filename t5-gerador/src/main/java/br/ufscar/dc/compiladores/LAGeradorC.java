@@ -3,8 +3,11 @@ package br.ufscar.dc.compiladores;
 import java.util.Iterator;
 
 import br.ufscar.dc.compiladores.LAParser.CmdContext;
+import br.ufscar.dc.compiladores.LAParser.CmdEnquantoContext;
+import br.ufscar.dc.compiladores.LAParser.CmdParaContext;
 import br.ufscar.dc.compiladores.LAParser.ExpressaoContext;
 import br.ufscar.dc.compiladores.LAParser.IdentificadorContext;
+import br.ufscar.dc.compiladores.LAParser.Numero_intervaloContext;
 
 import org.antlr.v4.runtime.tree.TerminalNode;
 import br.ufscar.dc.compiladores.TabelaDeSimbolos.TipoDeclaracao;
@@ -16,7 +19,6 @@ public class LAGeradorC extends LABaseVisitor<Void>{
     public LAGeradorC() {
         saida = new StringBuilder();
         this.escopo = new Escopo();
-        
     }
 
     @Override
@@ -34,7 +36,7 @@ public class LAGeradorC extends LABaseVisitor<Void>{
             .forEach(dec -> visitDeclaracao_funcoes(dec));
 
         // Início da função principal
-        saida.append("int main() {\n");
+        saida.append("\nint main() {\n");
         escopo.criarNovoEscopo();
 
         ctx.corpo().declaracao_variaveis()
@@ -86,15 +88,16 @@ public class LAGeradorC extends LABaseVisitor<Void>{
                     // Se existir mais de um identificador, separar com vírgula
                     saida.append(", ");
                 }
-                // System.out.println("Adicionando identificador \"" + strIdentificador + "\" do tipo " + tipoVar);
                 escopo.escopoAtual().adicionar(strIdentificador, tipoVar);
             }
             saida.append(";\n");
         }
+        else if (ctx.CONSTANTE() != null){
+            saida.append("#define " + ctx.IDENT() + " " + ctx.valor_constante().getText() + "\n");
+        }
         return null;
     }
 
-    // '^'? identificador '<-' expressao
     @Override
     public Void visitCmdAtribuicao(LAParser.CmdAtribuicaoContext ctx) {
         saida.append("\t" + ctx.identificador().getText() + "=");
@@ -103,7 +106,6 @@ public class LAGeradorC extends LABaseVisitor<Void>{
         return null;
     }
 
-    // 'se' expressao 'entao' cmdIf+=cmd* ('senao' cmdElse+=cmd*)? 'fim_se'
     @Override
     public Void visitCmdSe(LAParser.CmdSeContext ctx) {
 
@@ -316,36 +318,75 @@ public class LAGeradorC extends LABaseVisitor<Void>{
 
     @Override
     public Void visitItem_selecao(LAParser.Item_selecaoContext ctx){
-        // for (int i=0; i<ctx.constantes().numero_intervalo().size(); i++){
-        //     int op_inicio, op_fim = 1;
-        //     int intervalo_inicio = Integer.parseInt(ctx.constantes().numero_intervalo(i).inicio.toString());
+        for (Numero_intervaloContext ctxNumInterv: ctx.constantes().numero_intervalo()){
+            int op_inicio = 1;
+            int op_fim = 1;
+            int intervalo_inicio = Integer.parseInt(ctxNumInterv.inicio.getText());
+            int intervalo_fim = intervalo_inicio;
 
-        //     if (ctx.constantes().numero_intervalo(i).fim != null){
-        //         int intervalo_fim = Integer.parseInt(ctx.constantes().numero_intervalo(i).fim.toString());
-        //     }
+            if (ctxNumInterv.fim != null){
+                intervalo_fim = Integer.parseInt(ctxNumInterv.fim.getText());
+            }
 
-        //     if (ctx.constantes().numero_intervalo(i).op_inicio != null)
-        //         op_inicio = -1;
+            // Caso exista os operadores, inverte o sinal;
+            if (ctxNumInterv.op_inicio != null)
+                op_inicio = -1;
 
-        //     if (ctx.constantes().numero_intervalo(i).op_fim != null)
-        //         op_fim = -1;
+            if (ctxNumInterv.op_fim != null)
+                op_fim = -1;
 
-        //     intervalo_inicio = intervalo_inicio * op_inicio;
+            // Caso não haja fim, o operador de inicio deve ser o mesmo que o fim.
+            if (intervalo_inicio == intervalo_fim){
+                op_fim = op_inicio;
+            }
 
-        //     if (ctx.constantes().numero_intervalo(i).fim != null)
-        //         intervalo_fim = intervalo_fim * op_fim;
+            intervalo_inicio = intervalo_inicio * op_inicio;
+            intervalo_fim = intervalo_fim * op_fim;
 
-        //     if (intervalo_fim == null){
-        //         saida.append("\t\tcase " + ctx.constantes().numero_intervalo(i).inicio.toString() + ":\n");
-                
-        //         for (int j=0; j< ctx.cmd().size(); j++)
-        //         {
-        //             saida.append("\t");
-        //             visitCmd(ctx.cmd(j));
-        //         }
-        //     }
-        // }
-        // saida.append("\t\tbreak;\n\n");
+            // Caso haja inicio e fim, coloca vários cases. 
+            for(int i = intervalo_inicio; i < intervalo_fim; i++){
+                saida.append("\t\tcase " + i + ":\n");
+            }
+
+            saida.append("\t\tcase " + intervalo_fim + ":\n");
+            
+            for (int j=0; j< ctx.cmd().size(); j++)
+            {
+                saida.append("\t");
+                visitCmd(ctx.cmd(j));
+            }
+        }
+        saida.append("\t\tbreak;\n\n");
+        return null;
+    }
+
+    @Override
+    public Void visitCmdPara(CmdParaContext ctx) {
+        saida.append("\n\tfor (" + ctx.IDENT().getText() + " = " + ctx.inicioExp.getText() + "; " + ctx.IDENT().getText() + " <= " + ctx.fimExp.getText() + "; " + ctx.IDENT().getText() + "++) {\n");
+
+        for (CmdContext cmdCtx: ctx.cmd()){
+            saida.append("\t");
+            visitCmd(cmdCtx);
+        }
+
+        saida.append("\t}\n\n");
+
+        return null;
+    }
+
+    @Override
+    public Void visitCmdEnquanto(CmdEnquantoContext ctx) {
+        saida.append("\n\twhile (");
+        visitExpressao(ctx.expressao());
+        saida.append(") {\n");
+
+        for (CmdContext cmdCtx: ctx.cmd()){
+            saida.append("\t");
+            visitCmd(cmdCtx);
+        }
+
+        saida.append("\t}\n\n");
+
         return null;
     }
 }
