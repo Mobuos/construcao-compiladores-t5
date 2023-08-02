@@ -55,60 +55,9 @@ public class LAGeradorC extends LABaseVisitor<Void>{
 
     @Override
     public Void visitDeclaracao_variaveis(LAParser.Declaracao_variaveisContext ctx){
-        TipoDeclaracao tipoVar = TabelaDeSimbolos.TipoDeclaracao.INVALIDO;
         
         if(ctx.DECLARE() != null){
-            String strTipoLA = ctx.variavel().tipo().getText();
-            boolean ponteiro = false;
-
-            // Verifica se é um ponteiro.
-            if (strTipoLA.contains("^")){
-                strTipoLA = strTipoLA.replace("^", "");
-                ponteiro = true;
-            }
-
-            tipoVar = LAGeradorUtils.mapTipoDeclaracao(strTipoLA);
-            String strTipoC = LAGeradorUtils.mapTipoC(tipoVar);
-
-            if (ponteiro){
-                strTipoC += "*";
-            }
-
-            // Adicionando tipo da variável
-            saida.append("\t" + strTipoC + " ");
-
-            // Loop pelos identificadores, formando uma variavel
-            Iterator<IdentificadorContext> identificador = ctx.variavel().identificador().iterator();
-            while(identificador.hasNext()){
-                IdentificadorContext i = identificador.next();
-
-                // Loop pelos IDENTs, formando um identificador
-                Iterator<TerminalNode> ident = i.IDENT().iterator();
-                String strIdentificador = "";
-                while(ident.hasNext()){
-                    String strIdent = ident.next().getText();
-                    saida.append(strIdent);
-                    strIdentificador = strIdentificador.concat(strIdent);
-                    // No caso de string, adicionar um tamanho para o vetor de
-                    // caracteres com máximo definido em 80 (de acordo com os
-                    // testes disponibilizados)
-                    if (tipoVar == TipoDeclaracao.LITERAL){
-                        saida.append("[80]");
-                    }
-                    if (ident.hasNext()) {
-                        // Se existir mais de um IDENT, acessar campos do struct
-                        // com o ponto
-                        saida.append(".");
-                        strIdentificador = strIdentificador.concat(".");
-                    }
-                }
-                if (identificador.hasNext()){
-                    // Se existir mais de um identificador, separar com vírgula
-                    saida.append(", ");
-                }
-                escopo.escopoAtual().adicionar(strIdentificador, tipoVar);
-            }
-            saida.append(";\n");
+            visitVariavel(ctx.variavel());
         }
         else if (ctx.CONSTANTE() != null){
             saida.append("#define " + ctx.IDENT() + " " + ctx.valor_constante().getText() + "\n");
@@ -117,9 +66,66 @@ public class LAGeradorC extends LABaseVisitor<Void>{
     }
 
     @Override
+    public Void visitVariavel(LAParser.VariavelContext ctx){
+        TipoDeclaracao tipoVar = TabelaDeSimbolos.TipoDeclaracao.INVALIDO;
+
+        String strTipoLA = ctx.tipo().getText();
+        boolean ponteiro = false;
+
+        // Verifica se é um ponteiro.
+        if (strTipoLA.contains("^")){
+            strTipoLA = strTipoLA.replace("^", "");
+            ponteiro = true;
+        }
+
+        tipoVar = LAGeradorUtils.mapTipoDeclaracao(strTipoLA);
+        String strTipoC = LAGeradorUtils.mapTipoC(tipoVar);
+
+        if (ponteiro){
+            strTipoC += "*";
+        }
+
+        // Adicionando tipo da variável
+        saida.append("\t" + strTipoC + " ");
+
+        // Loop pelos identificadores, formando uma variavel
+        Iterator<IdentificadorContext> identificador = ctx.identificador().iterator();
+        while(identificador.hasNext()){
+            IdentificadorContext i = identificador.next();
+
+            // Loop pelos IDENTs, formando um identificador
+            Iterator<TerminalNode> ident = i.IDENT().iterator();
+            String strIdentificador = "";
+            while(ident.hasNext()){
+                String strIdent = ident.next().getText();
+                saida.append(strIdent);
+                strIdentificador = strIdentificador.concat(strIdent);
+                // No caso de string, adicionar um tamanho para o vetor de
+                // caracteres com máximo definido em 80 (de acordo com os
+                // testes disponibilizados)
+                if (tipoVar == TipoDeclaracao.LITERAL){
+                    saida.append("[80]");
+                }
+                if (ident.hasNext()) {
+                    // Se existir mais de um IDENT, acessar campos do struct
+                    // com o ponto
+                    saida.append(".");
+                    strIdentificador = strIdentificador.concat(".");
+                }
+            }
+            if (identificador.hasNext()){
+                // Se existir mais de um identificador, separar com vírgula
+                saida.append(", ");
+            }
+            escopo.escopoAtual().adicionar(strIdentificador, tipoVar);
+        }
+        saida.append(";\n");
+        return null;
+    }
+
+    @Override
     public Void visitRegistro(LAParser.RegistroContext ctx){
         saida.append("\tstruct {");
-        // TODO: criar função visitVariavel (ja está implementada dentro de visitDeclaracao_variaveis)
         ctx.variavel().forEach(var -> visitVariavel(var));
         saida.append("\t}\n");
         return null;
