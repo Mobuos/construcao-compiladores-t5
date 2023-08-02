@@ -14,25 +14,7 @@ public class LAGeradorUtils {
 
         return null;
     }
-
-    // Função auxiliar para complementar a última variável.
-    public static Void complementarVariavel(String complemento){
-        int lastIndex = listaVariaveis.size() - 1;
-        String valorAntigo = listaVariaveis.get(lastIndex);
-
-        listaVariaveis.set(lastIndex, valorAntigo + complemento );
-        
-        return null;
-    }
-
-    // Função auxiliar para complementar a variável do índice `index`.
-    public static Void complementarVariavel(String complemento, int index){
-        String valorAntigo = listaVariaveis.get(index);
-
-        listaVariaveis.set(index, valorAntigo + complemento );
-        return null;
-    }
-
+    
     // Função para limpar lista de variaveis.
     public static Void limparListaVariavel(){
         listaVariaveis.clear();
@@ -50,6 +32,9 @@ public class LAGeradorUtils {
     public static String mapTipoC(TipoDeclaracao tipo) {
         String strC = "";
         switch (tipo) {
+            case CADEIA:
+                strC = "char";
+                break;
             case LITERAL:
                 strC = "char";
                 break;

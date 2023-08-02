@@ -3,18 +3,8 @@ package br.ufscar.dc.compiladores;
 import java.util.Iterator;
 
 import br.ufscar.dc.compiladores.LAParser.CmdContext;
-import br.ufscar.dc.compiladores.LAParser.Exp_aritmeticaContext;
-import br.ufscar.dc.compiladores.LAParser.Exp_relacionalContext;
 import br.ufscar.dc.compiladores.LAParser.ExpressaoContext;
-import br.ufscar.dc.compiladores.LAParser.FatorContext;
-import br.ufscar.dc.compiladores.LAParser.Fator_logicoContext;
 import br.ufscar.dc.compiladores.LAParser.IdentificadorContext;
-import br.ufscar.dc.compiladores.LAParser.ParcelaContext;
-import br.ufscar.dc.compiladores.LAParser.Parcela_logicaContext;
-import br.ufscar.dc.compiladores.LAParser.Parcela_nao_unarioContext;
-import br.ufscar.dc.compiladores.LAParser.Parcela_unarioContext;
-import br.ufscar.dc.compiladores.LAParser.TermoContext;
-import br.ufscar.dc.compiladores.LAParser.Termo_logicoContext;
 
 import org.antlr.v4.runtime.tree.TerminalNode;
 import br.ufscar.dc.compiladores.TabelaDeSimbolos.TipoDeclaracao;
@@ -190,8 +180,11 @@ public class LAGeradorC extends LABaseVisitor<Void>{
             if (formatString == "%s"){
                 formatString = "%[^\\n]";
             }
+            else{
+                nomeVar = "&" + nomeVar;
+            }
 
-            saida.append("\tscanf(\"" + formatString + "\", &" + nomeVar + ");\n");
+            saida.append("\tscanf(\"" + formatString + "\", " + nomeVar + ");\n");
         }
         
         return null;
@@ -262,7 +255,16 @@ public class LAGeradorC extends LABaseVisitor<Void>{
         saida.append("\tprintf(\"");
 
         for (ExpressaoContext expressao: ctx.expressao()){
-            utilsExpressao(expressao, false);
+            TipoDeclaracao tipoExpressao = LASemanticoUtils.verificarTipo(escopo, expressao);
+
+            if (tipoExpressao == TipoDeclaracao.CADEIA){
+                saida.append(expressao.getText().replace("\"", ""));
+            }
+            else{
+                LAGeradorUtils.adicionarVariavel(expressao.getText());
+                String formatoString = LAGeradorUtils.TipoParaFormatString(tipoExpressao);
+                saida.append(formatoString);
+            }
         }
 
         // Adiciona aspas para fechar a string.
@@ -346,151 +348,4 @@ public class LAGeradorC extends LABaseVisitor<Void>{
         // saida.append("\t\tbreak;\n\n");
         return null;
     }
-
-    // termo_logico (op_logico_1 termo_logico)*
-    //                   'ou'
-    public Void utilsExpressao(ExpressaoContext ctx, boolean append) {
-        for (Termo_logicoContext termoLogico: ctx.termo_logico()){
-            utilsTermo_logico(termoLogico, append);
-        }
-
-        return null;
-    }
-
-    // fator_logico (op_logico_2 fator_logico)*
-    //                  'e'
-    public Void utilsTermo_logico(Termo_logicoContext ctx, boolean append) {
-        for (Fator_logicoContext fatorLogico: ctx.fator_logico()){
-            utilsFator_logico(fatorLogico, append);
-        }
-
-        return null;
-    }
-
-    // 'nao'? parcela_logica
-    public Void utilsFator_logico(Fator_logicoContext ctx, boolean append) {
-        if (ctx.parcela_logica() != null){
-            utilsParcela_logica(ctx.parcela_logica(), append);
-        }
-
-        return null;
-    }
-
-    // : ( 'verdadeiro' | 'falso' )
-	// | exp_relacional
-    public Void utilsParcela_logica(Parcela_logicaContext ctx, boolean append) {
-        if (ctx.exp_relacional() != null){
-            utilsExp_relacional(ctx.exp_relacional(), append);
-        }
-
-        else{
-            
-        }
-
-        return null;
-    }
-
-    // exp_aritmetica (op_relacional exp_aritmetica)?
-    //      '=' | '<>' | '>=' | '<=' | '>' | '<'
-    public Void utilsExp_relacional(Exp_relacionalContext ctx, boolean append) {
-        for (Exp_aritmeticaContext expAritmetica: ctx.exp_aritmetica()){
-            utilsExp_aritmetica(expAritmetica, append);
-        }
-        return null;
-    }
-    
-    // termo (op1 termo)*
-    //     '+' | '-'
-    public Void utilsExp_aritmetica(Exp_aritmeticaContext ctx, boolean append) {
-        utilsTermo(ctx.termo(0), append);
-
-        if (ctx.op1() != null){
-            for (int i = 0; i < ctx.op1().size(); i++){
-                // Complementa a última variável que foi colocada com a operação.
-                LAGeradorUtils.complementarVariavel(ctx.op1(i).getText());
-                utilsTermo(ctx.termo(i + 1), true);
-            }
-        }
-        return null;
-    }
-
-    // fator (op2 fator)*
-    //     '*' | '/'
-    public Void utilsTermo(TermoContext ctx, boolean append) {
-        for (FatorContext fator: ctx.fator()){
-            utilsFator(fator, append);
-        }
-        return null;
-    }
-
-    // parcela (op3 parcela)*
-    //          '%'
-    public Void utilsFator(FatorContext ctx, boolean append) {
-        for (ParcelaContext parcela: ctx.parcela()){
-            utilsParcela(parcela, append);
-        }
-        
-        return null;
-    }
-
-    // op_unario? parcela_unario | parcela_nao_unario
-    //   '-'
-    public Void utilsParcela(ParcelaContext ctx, boolean append) {
-        if (ctx.parcela_nao_unario() != null){
-            utilsParcela_nao_unario(ctx.parcela_nao_unario(), append);
-        }
-        else{
-            utilsParcela_unario(ctx.parcela_unario(), append);
-        }
-
-        return null;
-    }
-
-    // : '^'? identificador
-	// | cmdChamada
-	// | NUM_INT
-	// | NUM_REAL
-	// | '(' exp_unica=expressao ')'
-    public Void utilsParcela_unario(Parcela_unarioContext ctx, boolean append) {
-        if (ctx.identificador() != null){
-            utilsIdentificador(ctx.identificador(), append);
-        }
-        
-        return null;
-    }
-
-    // '&' identificador | CADEIA
-    public Void utilsParcela_nao_unario(Parcela_nao_unarioContext ctx, boolean append) {
-        if (ctx.CADEIA() != null){
-            // Remove as aspas da CADEIA.
-            saida.append(ctx.CADEIA().getText().replace("\"", ""));
-        }
-
-        return null;
-    }
-
-    public Void utilsIdentificador(IdentificadorContext ctx, boolean append) {
-        String nomeVar = ctx.IDENT(0).getText();
-        String formatString = "";
-
-        // Caso seja um registro monta o nome da variável com pontos.
-        for(int i = 0; i < ctx.PONTO().size(); i++){
-            nomeVar += "." + ctx.IDENT(i + 1);
-        }
-
-        formatString = LAGeradorUtils.TipoParaFormatString(escopo.verificaTodosEscopos(nomeVar));
-
-        if (formatString != "ERR"){
-            if (append){
-                LAGeradorUtils.complementarVariavel(nomeVar);
-            }
-            else{
-                LAGeradorUtils.adicionarVariavel(nomeVar);
-                saida.append(formatString);
-            }
-        }
-
-        return null;
-    }
-
 }
