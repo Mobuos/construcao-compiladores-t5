@@ -59,8 +59,20 @@ public class LAGeradorC extends LABaseVisitor<Void>{
         
         if(ctx.DECLARE() != null){
             String strTipoLA = ctx.variavel().tipo().getText();
+            boolean ponteiro = false;
+
+            // Verifica se é um ponteiro.
+            if (strTipoLA.contains("^")){
+                strTipoLA = strTipoLA.replace("^", "");
+                ponteiro = true;
+            }
+
             tipoVar = LAGeradorUtils.mapTipoDeclaracao(strTipoLA);
             String strTipoC = LAGeradorUtils.mapTipoC(tipoVar);
+
+            if (ponteiro){
+                strTipoC += "*";
+            }
 
             // Adicionando tipo da variável
             saida.append("\t" + strTipoC + " ");
@@ -106,7 +118,13 @@ public class LAGeradorC extends LABaseVisitor<Void>{
 
     @Override
     public Void visitCmdAtribuicao(LAParser.CmdAtribuicaoContext ctx) {
-        saida.append("\t" + ctx.identificador().getText() + "=");
+        saida.append("\t");
+
+        if (ctx.PONTEIRO() != null){
+            saida.append("*");
+        }
+
+        saida.append(ctx.identificador().getText() + " = ");
         visitExpressao(ctx.expressao());
         saida.append(";\n");
         return null;
@@ -192,7 +210,7 @@ public class LAGeradorC extends LABaseVisitor<Void>{
                 nomeVar = "&" + nomeVar;
             }
 
-            saida.append("\tscanf(\"" + formatString + "\", " + nomeVar + ");\n");
+            saida.append("\n\tscanf(\"" + formatString + "\", " + nomeVar + ");\n\n");
         }
         
         return null;
@@ -324,7 +342,7 @@ public class LAGeradorC extends LABaseVisitor<Void>{
 
     @Override
     public Void visitCmdEscreva(LAParser.CmdEscrevaContext ctx) {
-        saida.append("\tprintf(\"");
+        saida.append("\n\tprintf(\"");
 
         for (ExpressaoContext expressao: ctx.expressao()){
             TipoDeclaracao tipoExpressao = LASemanticoUtils.verificarTipo(escopo, expressao);
@@ -357,7 +375,7 @@ public class LAGeradorC extends LABaseVisitor<Void>{
             }
         }
 
-        saida.append(");\n");
+        saida.append(");\n\n");
 
         LAGeradorUtils.limparListaVariavel();
 

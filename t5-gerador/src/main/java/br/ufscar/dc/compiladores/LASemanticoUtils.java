@@ -50,6 +50,11 @@ public class LASemanticoUtils {
         if (tipo1 == tipo2){
             return true;
         }
+        else if (tipo1 == TipoDeclaracao.PONTEIRO ||
+            tipo2 == TipoDeclaracao.PONTEIRO)
+        {
+            return true;
+        }
         // Verifica a compatibilidade entre REAL e INTEIROS.
         else if (
                 (
