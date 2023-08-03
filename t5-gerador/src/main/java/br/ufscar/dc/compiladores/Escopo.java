@@ -16,8 +16,8 @@ public class Escopo {
         pilhaDeTabelas.push(new TabelaDeSimbolos());
     }
 
-    public void removerEscopo(){
-        pilhaDeTabelas.pop();
+    public TabelaDeSimbolos removerEscopo(){
+        return pilhaDeTabelas.pop();
     }
 
     public TabelaDeSimbolos escopoAtual(){

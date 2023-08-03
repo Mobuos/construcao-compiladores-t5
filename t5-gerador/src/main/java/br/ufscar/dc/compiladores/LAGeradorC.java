@@ -60,6 +60,17 @@ public class LAGeradorC extends LABaseVisitor<Void>{
         else if (ctx.CONSTANTE() != null){
             saida.append("#define " + ctx.IDENT() + " " + ctx.valor_constante().getText() + "\n");
         }
+        else if (ctx.TIPO() != null){
+            escopo.criarNovoEscopo();
+            saida.append("\ttypedef struct{\n");
+            visitRegistro(ctx.registro());
+            saida.append("\t} " + ctx.IDENT().getText() + ";\n");
+
+            TabelaDeSimbolos dadosTipo = escopo.escopoAtual();
+
+            escopo.escopoAtual().adicionarTipo(ctx.IDENT().getText(), dadosTipo);
+        }
+
         return null;
     }
 
@@ -67,7 +78,7 @@ public class LAGeradorC extends LABaseVisitor<Void>{
     public Void visitVariavel(LAParser.VariavelContext ctx){
         TipoDeclaracao tipoVariavel = LASemanticoUtils.verificarTipo(escopo, ctx.tipo());
 
-        if (tipoVariavel != TipoDeclaracao.REGISTRO){
+        if (tipoVariavel != TipoDeclaracao.REGISTRO && tipoVariavel != TipoDeclaracao.TIPO){
             String strCtipo = LAGeradorUtils.mapTipoC(tipoVariavel);
 
             if (tipoVariavel == TipoDeclaracao.PONTEIRO){
@@ -98,10 +109,29 @@ public class LAGeradorC extends LABaseVisitor<Void>{
                 }
             }
         }
-        else{
-            
+        else if (tipoVariavel == TipoDeclaracao.REGISTRO){
+            escopo.criarNovoEscopo();
+            saida.append("\tstruct {\n");
+            visitRegistro(ctx.tipo().registro());
+            saida.append("\t} " + ctx.identificador(0).getText());
+
+            TabelaDeSimbolos dadosRegistro = escopo.escopoAtual();
+
+            escopo.escopoAtual().adicionarRegistro(ctx.identificador(0).getText(), dadosRegistro);
         }
-        
+        else {
+            String nomeTipo = ctx.tipo().getText();
+            TabelaDeSimbolos dadosRegistro = escopo.escopoAtual().recuperarRegistro(nomeTipo);
+
+            saida.append("\t" + nomeTipo);
+            saida.append(" " + ctx.identificador(0).getText());
+            escopo.escopoAtual().adicionarRegistro(ctx.identificador(0).getText(), dadosRegistro);
+            
+            for (int i = 0; i < ctx.VIRGULA().size(); i++){
+                saida.append(", " + ctx.identificador(i + 1).getText());
+                escopo.escopoAtual().adicionarRegistro(ctx.identificador(i + 1).getText(), dadosRegistro);
+            }
+        }
         saida.append(";\n");
 
         return null;
@@ -109,22 +139,33 @@ public class LAGeradorC extends LABaseVisitor<Void>{
 
     @Override
     public Void visitRegistro(LAParser.RegistroContext ctx){
-        saida.append("\tstruct {");
-        ctx.variavel().forEach(var -> visitVariavel(var));
-        saida.append("\t}\n");
+        ctx.variavel().forEach(var -> {
+            saida.append("\t");
+            visitVariavel(var);
+        });
         return null;
     }
 
     @Override
     public Void visitCmdAtribuicao(LAParser.CmdAtribuicaoContext ctx) {
+        TipoDeclaracao tipoVariavel = LASemanticoUtils.verificarTipo(escopo, ctx.identificador());
+
         saida.append("\t");
 
-        if (ctx.PONTEIRO() != null){
-            saida.append("*");
+        if (tipoVariavel == TipoDeclaracao.LITERAL){
+            saida.append("strcpy(" + ctx.identificador().getText() + ", ");
+            visitExpressao(ctx.expressao());
+            saida.append(")");
+        }
+        else{
+            if (ctx.PONTEIRO() != null){
+                saida.append("*");
+            }
+            
+            saida.append(ctx.identificador().getText() + " = ");
+            visitExpressao(ctx.expressao());
         }
 
-        saida.append(ctx.identificador().getText() + " = ");
-        visitExpressao(ctx.expressao());
         saida.append(";\n");
         return null;
     }
