@@ -2,10 +2,13 @@ package br.ufscar.dc.compiladores;
 
 import java.util.Iterator;
 
+import br.ufscar.dc.compiladores.LAParser.CmdChamadaContext;
 import br.ufscar.dc.compiladores.LAParser.CmdContext;
 import br.ufscar.dc.compiladores.LAParser.CmdEnquantoContext;
 import br.ufscar.dc.compiladores.LAParser.CmdFacaContext;
 import br.ufscar.dc.compiladores.LAParser.CmdParaContext;
+import br.ufscar.dc.compiladores.LAParser.CmdRetorneContext;
+import br.ufscar.dc.compiladores.LAParser.Declaracao_funcoesContext;
 import br.ufscar.dc.compiladores.LAParser.Exp_aritmeticaContext;
 import br.ufscar.dc.compiladores.LAParser.ExpressaoContext;
 import br.ufscar.dc.compiladores.LAParser.FatorContext;
@@ -52,6 +55,53 @@ public class LAGeradorC extends LABaseVisitor<Void>{
     }
 
     @Override
+    public Void visitDeclaracao_funcoes(Declaracao_funcoesContext ctx) {
+        TipoDeclaracao tipoRetorno = TipoDeclaracao.PROCEDIMENTO;
+
+        if (ctx.FUNCAO() != null){
+            tipoRetorno = LASemanticoUtils.verificarTipo(escopo, ctx.tipo_variavel());
+            String strCTipo = LAGeradorUtils.mapTipoC(tipoRetorno);
+
+            saida.append(strCTipo + " ");
+        }
+        else{
+            saida.append("void ");
+        }
+
+        saida.append(ctx.IDENT().getText() + " (");
+
+        if (ctx.parametros() != null){
+            TipoDeclaracao tipoParametro = LASemanticoUtils.verificarTipo(escopo, ctx.parametros().parametro(0).tipo_variavel());
+            String strCTipoParametro = LAGeradorUtils.mapTipoC(tipoParametro);
+            TabelaDeSimbolos parametros = new TabelaDeSimbolos();
+
+            parametros.adicionar(ctx.parametros().parametro(0).identificador(0).getText(), tipoParametro);
+            escopo.escopoAtual().adicionar(ctx.IDENT().getText(), tipoRetorno, parametros);
+            saida.append(strCTipoParametro);
+
+            if (tipoParametro == TipoDeclaracao.LITERAL){
+                saida.append("*");
+            }
+            
+            saida.append(" " + ctx.parametros().parametro(0).identificador(0).getText());
+        }
+
+        saida.append("){\n");
+        escopo.criarNovoEscopo();
+
+        if (ctx.parametros() != null){
+            TipoDeclaracao tipoParametro = LASemanticoUtils.verificarTipo(escopo, ctx.parametros().parametro(0).tipo_variavel());
+            escopo.escopoAtual().adicionar(ctx.parametros().parametro(0).identificador(0).getText(), tipoParametro);
+        }
+
+        ctx.declaracao_variaveis().forEach(dec -> visitDeclaracao_variaveis(dec));
+        ctx.cmd().forEach(cmd -> visitCmd(cmd));
+        saida.append("}\n");
+
+        return null;
+    }
+
+    @Override
     public Void visitDeclaracao_variaveis(LAParser.Declaracao_variaveisContext ctx){
         
         if(ctx.DECLARE() != null){
@@ -94,7 +144,7 @@ public class LAGeradorC extends LABaseVisitor<Void>{
 
             saida.append(" " + ctx.identificador(0).getText());
 
-            escopo.escopoAtual().adicionar(ctx.identificador(0).getText(), tipoVariavel);
+            escopo.escopoAtual().adicionar(ctx.identificador(0).IDENT(0).getText(), tipoVariavel);
 
             if (tipoVariavel == TipoDeclaracao.LITERAL){
                 saida.append("[80]");
@@ -102,7 +152,7 @@ public class LAGeradorC extends LABaseVisitor<Void>{
             
             for (int i = 0; i < ctx.VIRGULA().size(); i++){
                 saida.append(", " + ctx.identificador(i + 1).getText());
-                escopo.escopoAtual().adicionar(ctx.identificador(i + 1).getText(), tipoVariavel);
+                escopo.escopoAtual().adicionar(ctx.identificador(i + 1).IDENT(0).getText(), tipoVariavel);
 
                 if (tipoVariavel == TipoDeclaracao.LITERAL){
                     saida.append("[80]");
@@ -530,6 +580,26 @@ public class LAGeradorC extends LABaseVisitor<Void>{
         saida.append("\t} while (");
         visitExpressao(ctx.expressao());
         saida.append(");\n\n");
+
+        return null;
+    }
+
+    @Override
+    public Void visitCmdChamada(CmdChamadaContext ctx) {
+        saida.append("\t" + ctx.IDENT().getText() + "(");
+
+        visitExpressao(ctx.expressao(0));
+
+        saida.append(");\n");
+
+        return null;
+    }
+
+    @Override
+    public Void visitCmdRetorne(CmdRetorneContext ctx) {
+        saida.append("\treturn ");
+        visitExpressao(ctx.expressao());
+        saida.append(";\n");
 
         return null;
     }
