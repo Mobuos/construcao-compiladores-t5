@@ -32,9 +32,6 @@ public class LAGeradorUtils {
     public static String mapTipoC(TipoDeclaracao tipo) {
         String strC = "";
         switch (tipo) {
-            case CADEIA:
-                strC = "char";
-                break;
             case LITERAL:
                 strC = "char";
                 break;

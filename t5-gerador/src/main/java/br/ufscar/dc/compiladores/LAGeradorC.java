@@ -387,7 +387,7 @@ public class LAGeradorC extends LABaseVisitor<Void>{
         for (ExpressaoContext expressao: ctx.expressao()){
             TipoDeclaracao tipoExpressao = LASemanticoUtils.verificarTipo(escopo, expressao);
 
-            if (tipoExpressao == TipoDeclaracao.CADEIA){
+            if (expressao.getText().contains("\"")){
                 saida.append(expressao.getText().replace("\"", ""));
             }
             else{

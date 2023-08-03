@@ -7,7 +7,6 @@ public class TabelaDeSimbolos {
         INTEIRO,
         REAL,
         LITERAL,
-        CADEIA,
         LOGICO,
         REGISTRO,
         PONTEIRO,
